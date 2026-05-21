@@ -1,0 +1,90 @@
+/* ===================== responsive.css ===================== */
+
+/* ---- 1200px ---- */
+@media (max-width: 1200px) {
+  .summary-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---- 992px ---- */
+@media (max-width: 992px) {
+  .charts-grid { grid-template-columns: 1fr; }
+  .chart-card--wide { grid-column: auto; }
+}
+
+/* ---- 768px ---- */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px;
+    z-index: 300;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .sidebar-close { display: flex; }
+
+  .main-content { margin-left: 0; }
+
+  .hamburger { display: flex; }
+
+  .section { padding: 16px; }
+
+  .summary-cards { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .form-row { grid-template-columns: 1fr; gap: 14px; }
+
+  .modal { max-width: 100%; margin: 0; border-radius: 20px 20px 0 0; }
+  .modal-backdrop { align-items: flex-end; padding: 0; }
+
+  .section-header { flex-direction: column; align-items: flex-start; }
+  .header-actions { width: 100%; justify-content: flex-end; }
+
+  .filter-row { flex-direction: column; align-items: stretch; }
+  .search-wrap { min-width: auto; }
+  .filter-chips { flex-wrap: wrap; }
+
+  .budget-input-row { flex-direction: column; }
+  .budget-input-row .btn-primary { width: 100%; }
+
+  .profile-avatar-upload { flex-direction: column; align-items: flex-start; }
+
+  .filter-row--secondary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .filter-row--secondary .filter-group { flex-direction: column; align-items: flex-start; }
+  .filter-row--secondary .filter-group input,
+  .filter-row--secondary .filter-group select { width: 100%; }
+
+  .tx-item { padding: 12px 16px; }
+  .tx-notes { display: none; }
+
+  .charts-grid { gap: 12px; }
+  .chart-card { padding: 16px; }
+}
+
+/* ---- 480px ---- */
+@media (max-width: 480px) {
+  .summary-cards { grid-template-columns: 1fr; }
+
+  .card-value { font-size: 1.2rem; }
+
+  .top-header { padding: 0 16px; }
+
+  .section-header h2 { font-size: 1.1rem; }
+
+  .tx-amount { min-width: 70px; font-size: .88rem; }
+
+  .type-btn { font-size: .8rem; padding: 8px 10px; }
+
+  .filter-row--secondary {
+    grid-template-columns: 1fr;
+  }
+
+  .toast-container { left: 16px; right: 16px; bottom: 16px; }
+  .toast { min-width: auto; }
+
+  .auth-card { padding: 24px 16px; }
+  .auth-title { font-size: 1.4rem; }
+}
+
