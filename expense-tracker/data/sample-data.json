@@ -1,0 +1,20 @@
+{
+  "description": "Sample data structure for FinFlow. This is seeded automatically via the Demo Account button.",
+  "user": {
+    "id": "u_demo",
+    "name": "Alex Demo",
+    "email": "demo@finflow.app",
+    "password": "ZGVtbzEyMzQ=",
+    "currency": "₹",
+    "avatar": "",
+    "theme": "light",
+    "budget": 30000
+  },
+  "transaction_examples": [
+    { "id": "tx_001", "type": "income", "title": "Monthly Salary", "amount": 75000, "category": "Salary", "date": "2026-05-01", "notes": "June salary credited" },
+    { "id": "tx_002", "type": "expense", "title": "Weekly Groceries", "amount": 2800, "category": "Food", "date": "2026-05-19", "notes": "Supermarket run" },
+    { "id": "tx_003", "type": "expense", "title": "Netflix", "amount": 799, "category": "Entertainment", "date": "2026-05-15", "notes": "Monthly subscription" },
+    { "id": "tx_004", "type": "income", "title": "Freelance Project", "amount": 18000, "category": "Freelance", "date": "2026-05-10", "notes": "Logo design" },
+    { "id": "tx_005", "type": "expense", "title": "Electricity Bill", "amount": 1850, "category": "Bills", "date": "2026-05-05", "notes": "May bill" }
+  ]
+}
