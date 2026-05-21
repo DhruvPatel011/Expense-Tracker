@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 💸 FinFlow – Smart Expense Tracker
 
 A production-quality, feature-rich personal finance dashboard built with pure HTML, CSS, and Vanilla JavaScript — no backend required.
@@ -184,6 +183,3 @@ MIT – free to use, modify, and distribute.
 ---
 
 Made with ❤️ using pure frontend technologies.
-=======
-# Expense-Tracker
->>>>>>> 3cbf39adce86ed21a14955266376990b7806fdf3
