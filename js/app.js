@@ -1,6 +1,6 @@
 // ===================== app.js =====================
 // Main initialization – orchestrates all modules
-
+ 
 import { getCurrentUser, clearCurrentUser, updateUser, clearAllUserData } from './storage.js';
 import { getUserTxs, createTx, editTx, removeTx, getCategoriesByType } from './transactions.js';
 import { applyFilters } from './filters.js';
@@ -10,19 +10,19 @@ import { updateBudgetUI } from './budget.js';
 import { loadProfileForm, updateAvatarUIs, handleAvatarUpload } from './profile.js';
 import { initTheme, toggleTheme } from './theme.js';
 import { exportCSV, exportPDF } from './export.js';
-
+ 
 // ======================== INIT ========================
 let currentUser = getCurrentUser();
 if (!currentUser) { window.location.href = 'index.html'; throw new Error('Not logged in'); }
-
+ 
 initTheme();
-
+ 
 // ======================== STATE ========================
 let allTxs = [];
 let filterState = { type: 'all', period: '', category: '', search: '', dateFrom: '', dateTo: '' };
 let pendingDeleteId = null;
 let editingTxId = null;
-
+ 
 // ======================== HELPERS ========================
 function toast(msg, type = 'success') {
   const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
@@ -32,165 +32,127 @@ function toast(msg, type = 'success') {
   document.getElementById('toastContainer').appendChild(t);
   setTimeout(() => { t.style.animation = 'slideOut .3s ease forwards'; setTimeout(() => t.remove(), 300); }, 3000);
 }
-
+ 
 function reloadUser() {
   currentUser = getCurrentUser();
 }
-
+ 
 function loadTxs() {
   allTxs = getUserTxs(currentUser.id);
 }
-
+ 
 function getFilteredTxs() {
   return applyFilters(allTxs, filterState);
 }
-
-
+ 
+ 
 // ================= LIVE USD RATE =================
-
+ 
 export let USD_RATE = 83.5;
-
+ 
 export async function fetchUSDRate() {
   try {
-
-    const res = await fetch(
-      'https://open.er-api.com/v6/latest/USD'
-    );
-
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
     const data = await res.json();
-
+ 
     if (data?.rates?.INR) {
       USD_RATE = data.rates.INR;
-
-      // save locally
-      localStorage.setItem(
-        'usd_rate',
-        USD_RATE
-      );
+      localStorage.setItem('usd_rate', USD_RATE);
     }
-
   } catch (err) {
-
     console.log('Currency API failed');
-
     // fallback saved rate
-    USD_RATE =
-      Number(localStorage.getItem('usd_rate'))
-      || 83.5;
+    USD_RATE = Number(localStorage.getItem('usd_rate')) || 83.5;
   }
 }
-
+ 
 // ======================== RENDER ========================
 function refreshAll() {
   reloadUser();
   loadTxs();
   const filtered = getFilteredTxs();
   updateSummaryCards(allTxs, currentUser.currency);
-
+ 
   // Overview
   renderTxList(allTxs, 'recentTxList', currentUser.currency, openEditModal, openDeleteConfirm, 8);
-
+ 
   // Income / Expense sections
   renderTxList(allTxs.filter(t => t.type === 'income'), 'incomeTxList', currentUser.currency, openEditModal, openDeleteConfirm);
   renderTxList(allTxs.filter(t => t.type === 'expense'), 'expenseTxList', currentUser.currency, openEditModal, openDeleteConfirm);
-
+ 
   // All transactions with filters
   renderTxList(filtered, 'allTxList', currentUser.currency, openEditModal, openDeleteConfirm);
-
+ 
   // Charts use all txs
   renderAllCharts(allTxs, currentUser.currency);
-
+ 
   // Budget
   updateBudgetUI(allTxs, currentUser);
-
+ 
   // Profile
   loadProfileForm(currentUser);
   updateAvatarUIs(currentUser);
-
+ 
   // Settings currency
   document.getElementById('settingsCurrency').value = currentUser.currency;
 }
-
+ 
 // ======================== NAV ========================
 const sections = document.querySelectorAll('.section');
 const navItems = document.querySelectorAll('.nav-item');
-
+ 
 function navigateTo(sectionId) {
   sections.forEach(s => s.classList.remove('active'));
   navItems.forEach(n => n.classList.remove('active'));
-
+ 
   const target = document.getElementById(`section-${sectionId}`);
   const navItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
-
+ 
   if (target) target.classList.add('active');
   if (navItem) navItem.classList.add('active');
-
+ 
   document.getElementById('pageTitle').textContent =
     sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
-
+ 
   // Lazy re-render charts when switching to analytics
-  if (sectionId === 'analytics') { setTimeout(() => renderAllCharts(allTxs,currentUser.currency), 50); }
-
+  if (sectionId === 'analytics') { setTimeout(() => renderAllCharts(allTxs, currentUser.currency), 50); }
+ 
   closeSidebar();
 }
-
+ 
 navItems.forEach(item => {
   item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(item.dataset.section); });
 });
-
+ 
 // View All link in overview
 document.querySelectorAll('[data-section]').forEach(el => {
   if (el.tagName === 'BUTTON' && !el.classList.contains('nav-item')) {
     el.addEventListener('click', () => navigateTo(el.dataset.section));
   }
 });
-
+ 
 // ================= PROFILE OPEN ON AVATAR CLICK =================
-
+ 
 // Header avatar
 document.getElementById('headerAvatar')
-?.addEventListener('click', () => {
-
-  // remove active from all nav items
-  document.querySelectorAll('.nav-item')
-    .forEach(item => item.classList.remove('active'));
-
-  // activate profile nav
-  document.querySelector('[data-section="profile"]')
-    ?.classList.add('active');
-
-  // hide all sections
-  document.querySelectorAll('.section')
-    .forEach(sec => sec.classList.remove('active'));
-
-  // show profile section
-  document.getElementById('section-profile')
-    ?.classList.add('active');
-
-  // change page title
-  document.getElementById('pageTitle').textContent = 'Profile';
-});
-
-
+  ?.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    document.querySelector('[data-section="profile"]')?.classList.add('active');
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById('section-profile')?.classList.add('active');
+    document.getElementById('pageTitle').textContent = 'Profile';
+  });
+ 
 // Sidebar avatar
 document.getElementById('sidebarAvatar')
-?.addEventListener('click', () => {
-
-  document.querySelectorAll('.nav-item')
-    .forEach(item => item.classList.remove('active'));
-
-  document.querySelector('[data-section="profile"]')
-    ?.classList.add('active');
-
-  document.querySelectorAll('.section')
-    .forEach(sec => sec.classList.remove('active'));
-
-  document.getElementById('section-profile')
-    ?.classList.add('active');
-
-  document.getElementById('pageTitle').textContent = 'Profile';
-});
-
+  ?.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    document.querySelector('[data-section="profile"]')?.classList.add('active');
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById('section-profile')?.classList.add('active');
+    document.getElementById('pageTitle').textContent = 'Profile';
+  });
+ 
 // ======================== SIDEBAR ========================
 function openSidebar() {
   document.getElementById('sidebar').classList.add('open');
@@ -200,19 +162,19 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
 }
-
+ 
 document.getElementById('hamburger').addEventListener('click', openSidebar);
 document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
 document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
-
+ 
 // ======================== THEME ========================
 function handleThemeToggle() {
   toggleTheme();
-  setTimeout(() => renderAllCharts(allTxs), 100);
+  setTimeout(() => renderAllCharts(allTxs, currentUser.currency), 100);
 }
 document.getElementById('themeToggleHeader').addEventListener('click', handleThemeToggle);
 document.getElementById('themeToggle').addEventListener('change', handleThemeToggle);
-
+ 
 // ======================== MODAL HELPERS ========================
 function openModal(title = 'Add Transaction') {
   document.getElementById('modalTitle').textContent = title;
@@ -225,13 +187,13 @@ function closeModal() {
   editingTxId = null;
   setTxType('income');
 }
-
+ 
 document.getElementById('closeModal').addEventListener('click', closeModal);
 document.getElementById('cancelModal').addEventListener('click', closeModal);
 document.getElementById('txModal').addEventListener('click', (e) => {
   if (e.target === document.getElementById('txModal')) closeModal();
 });
-
+ 
 // Type toggle
 function setTxType(type) {
   document.getElementById('txType').value = type;
@@ -240,17 +202,17 @@ function setTxType(type) {
   });
   updateCategoryOptions(type);
 }
-
+ 
 document.querySelectorAll('.type-btn').forEach(btn => {
   btn.addEventListener('click', () => setTxType(btn.dataset.type));
 });
-
+ 
 function updateCategoryOptions(type) {
   const cats = getCategoriesByType(type);
   const sel = document.getElementById('txCategory');
   sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
 }
-
+ 
 function openAddModal(type = 'income') {
   editingTxId = null;
   document.getElementById('txId').value = '';
@@ -258,7 +220,7 @@ function openAddModal(type = 'income') {
   setTxType(type);
   document.getElementById('txDate').value = new Date().toISOString().slice(0, 10);
 }
-
+ 
 function openEditModal(txId) {
   const tx = allTxs.find(t => t.id === txId);
   if (!tx) return;
@@ -267,16 +229,22 @@ function openEditModal(txId) {
   setTxType(tx.type);
   document.getElementById('txId').value = tx.id;
   document.getElementById('txTitle').value = tx.title;
-  document.getElementById('txAmount').value = tx.amount;
+ 
+  // FIX: amounts are stored in INR — convert back to display currency for the input field
+  const displayAmount = currentUser.currency === '$'
+    ? (tx.amount / USD_RATE).toFixed(2)
+    : tx.amount;
+  document.getElementById('txAmount').value = displayAmount;
+ 
   document.getElementById('txCategory').value = tx.category;
   document.getElementById('txDate').value = tx.date;
   document.getElementById('txNotes').value = tx.notes || '';
 }
-
+ 
 document.getElementById('addIncomeBtn').addEventListener('click', () => openAddModal('income'));
 document.getElementById('addExpenseBtn').addEventListener('click', () => openAddModal('expense'));
 document.getElementById('addTxBtn').addEventListener('click', () => openAddModal('income'));
-
+ 
 // ======================== SAVE TRANSACTION ========================
 document.getElementById('txForm').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -286,38 +254,26 @@ document.getElementById('txForm').addEventListener('submit', (e) => {
   const category = document.getElementById('txCategory').value;
   const date = document.getElementById('txDate').value;
   const notes = document.getElementById('txNotes').value;
-
+ 
   if (!title || !amount || amount <= 0 || !date) {
     toast('Please fill in all required fields.', 'error'); return;
   }
-
+ 
   const data = { id: editingTxId, type, title, amount, category, date, notes };
-
-if (editingTxId) {
-
-  editTx(
-    currentUser.id,
-    data,
-    currentUser.currency
-  );
-
-  toast('Transaction updated!');
-
-} else {
-
-  createTx(
-    currentUser.id,
-    data,
-    currentUser.currency
-  );
-
-  toast('Transaction added!');
-}
-
+ 
+  // FIX: pass currentUser.currency so createTx/editTx can convert USD→INR before saving
+  if (editingTxId) {
+    editTx(currentUser.id, data, currentUser.currency);
+    toast('Transaction updated!');
+  } else {
+    createTx(currentUser.id, data, currentUser.currency);
+    toast('Transaction added!');
+  }
+ 
   closeModal();
   refreshAll();
 });
-
+ 
 // ======================== DELETE ========================
 function openDeleteConfirm(txId) {
   pendingDeleteId = txId;
@@ -327,7 +283,7 @@ function closeDeleteConfirm() {
   pendingDeleteId = null;
   document.getElementById('confirmModal').classList.remove('open');
 }
-
+ 
 document.getElementById('closeConfirm').addEventListener('click', closeDeleteConfirm);
 document.getElementById('cancelConfirm').addEventListener('click', closeDeleteConfirm);
 document.getElementById('confirmDelete').addEventListener('click', () => {
@@ -338,13 +294,13 @@ document.getElementById('confirmDelete').addEventListener('click', () => {
   }
   closeDeleteConfirm();
 });
-
+ 
 // ======================== FILTERS ========================
 document.getElementById('searchInput').addEventListener('input', (e) => {
   filterState.search = e.target.value;
   applyAndRenderFiltered();
 });
-
+ 
 document.querySelectorAll('.chip').forEach(chip => {
   chip.addEventListener('click', () => {
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
@@ -356,12 +312,12 @@ document.querySelectorAll('.chip').forEach(chip => {
     applyAndRenderFiltered();
   });
 });
-
+ 
 document.getElementById('categoryFilter').addEventListener('change', (e) => {
   filterState.category = e.target.value;
   applyAndRenderFiltered();
 });
-
+ 
 document.getElementById('dateFrom').addEventListener('change', (e) => {
   filterState.dateFrom = e.target.value;
   applyAndRenderFiltered();
@@ -370,84 +326,63 @@ document.getElementById('dateTo').addEventListener('change', (e) => {
   filterState.dateTo = e.target.value;
   applyAndRenderFiltered();
 });
-
-
+ 
 document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-  // Reset filter state
-  filterState = {
-    type: 'all',
-    period: '',
-    category: '',
-    search: '',
-    dateFrom: '',
-    dateTo: ''
-  };
-
-  // Reset search input
+  filterState = { type: 'all', period: '', category: '', search: '', dateFrom: '', dateTo: '' };
+ 
   document.getElementById('searchInput').value = '';
-
-  // Reset category dropdown
   document.getElementById('categoryFilter').value = '';
-
-  // Reset date inputs
   document.getElementById('dateFrom').value = '';
   document.getElementById('dateTo').value = '';
-
-  // Reset active chips/buttons
+ 
   document.querySelectorAll('.chip').forEach(chip => {
     chip.classList.remove('active');
-
-    // Set "All" chip active again
-    if (chip.dataset.type === 'all') {
-      chip.classList.add('active');
-    }
+    if (chip.dataset.type === 'all') chip.classList.add('active');
   });
-
-  // Refresh filtered data
+ 
   refreshAll();
-
-  // Optional toast
   toast('Filters cleared.', 'success');
 });
-
+ 
 function applyAndRenderFiltered() {
   const filtered = getFilteredTxs();
   renderTxList(filtered, 'allTxList', currentUser.currency, openEditModal, openDeleteConfirm);
   updateSummaryCards(filtered, currentUser.currency);
 }
-
+ 
 // ======================== BUDGET ========================
 document.getElementById('saveBudgetBtn').addEventListener('click', () => {
   const val = parseFloat(document.getElementById('budgetInput').value);
   if (!val || val < 0) { toast('Enter a valid budget amount.', 'error'); return; }
-  const updated = { ...currentUser, budget: val };
+ 
+  // FIX: budget input is in the user's display currency — always store internally as INR
+  const budgetINR = currentUser.currency === '$' ? val * USD_RATE : val;
+ 
+  const updated = { ...currentUser, budget: budgetINR };
   updateUser(updated);
   currentUser = updated;
   updateBudgetUI(allTxs, currentUser);
   toast('Budget saved!');
 });
-
-
-//======================== Clear Budget ======================
+ 
+// ======================== Clear Budget ========================
 document.getElementById('clearBudgetBtn').addEventListener('click', () => {
   currentUser = { ...currentUser, budget: 0 };
   updateUser(currentUser);
-
   document.getElementById('budgetInput').value = '';
-
   refreshAll();
   toast('Budget cleared successfully.', 'success');
 });
-
+ 
 // ======================== PROFILE ========================
 document.getElementById('profileForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const name = document.getElementById('profileName').value.trim();
   const email = document.getElementById('profileEmail').value.trim();
   const currency = document.getElementById('profileCurrency').value;
-
+ 
   if (!name || !email) { toast('Name and email are required.', 'error'); return; }
-
+ 
   const updated = { ...currentUser, name, email, currency };
   updateUser(updated);
   currentUser = updated;
@@ -455,7 +390,7 @@ document.getElementById('profileForm').addEventListener('submit', (e) => {
   toast('Profile updated!');
   refreshAll();
 });
-
+ 
 document.getElementById('avatarUpload').addEventListener('change', (e) => {
   const file = e.target.files[0];
   handleAvatarUpload(file, currentUser, (updated) => {
@@ -464,7 +399,7 @@ document.getElementById('avatarUpload').addEventListener('change', (e) => {
     toast('Avatar updated!');
   });
 });
-
+ 
 // ======================== SETTINGS ========================
 document.getElementById('settingsCurrency').addEventListener('change', (e) => {
   const updated = { ...currentUser, currency: e.target.value };
@@ -473,7 +408,7 @@ document.getElementById('settingsCurrency').addEventListener('change', (e) => {
   refreshAll();
   toast('Currency updated!');
 });
-
+ 
 document.getElementById('resetDataBtn').addEventListener('click', () => {
   if (confirm('⚠️ This will permanently delete all your transactions and reset your budget. Are you sure?')) {
     clearAllUserData(currentUser.id);
@@ -481,7 +416,7 @@ document.getElementById('resetDataBtn').addEventListener('click', () => {
     toast('All data has been reset.', 'warning');
   }
 });
-
+ 
 // ======================== EXPORT ========================
 document.getElementById('exportCsvBtn').addEventListener('click', () => {
   const filtered = getFilteredTxs();
@@ -489,28 +424,22 @@ document.getElementById('exportCsvBtn').addEventListener('click', () => {
   exportCSV(filtered, currentUser.currency);
   toast('CSV exported!');
 });
-
+ 
 document.getElementById('exportPdfBtn').addEventListener('click', () => {
   if (!allTxs.length) { toast('No data to export.', 'error'); return; }
   exportPDF(allTxs, currentUser);
   toast('PDF report downloaded!');
 });
-
+ 
 // ======================== LOGOUT ========================
 document.getElementById('logoutBtn').addEventListener('click', () => {
   clearCurrentUser();
   window.location.href = 'index.html';
 });
-
-
-
+ 
 // ======================== INITIAL RENDER ========================
 (async () => {
   await fetchUSDRate();
-
   refreshAll();
   navigateTo('overview');
 })();
-
-
-
