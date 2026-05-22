@@ -161,13 +161,13 @@
 
 .brand-name {
 
+  font-family: "Space Grotesk", sans-serif !important;
+
   font-size: 34px;
 
-  font-weight: 800;
+  font-weight: 700;
 
-  font-family: "Inter", sans-serif;
-
-  letter-spacing: -.05em;
+  letter-spacing: -0.06em;
 
   color: #111111;
 
