@@ -104,17 +104,29 @@
 
 /* ================= BRAND ================= */
 
+/* ================= BRAND ================= */
+
 .auth-brand {
 
   display: flex;
 
   align-items: center;
 
-  gap: 14px;
+  justify-content: center;
+
+  gap: 16px;
 
   margin-bottom: 42px;
+
+  width: 100%;
 }
 
+.auth-title,
+.auth-subtitle,
+.auth-link {
+
+  text-align: center;
+}
 .brand-icon {
 
   width: 56px;
