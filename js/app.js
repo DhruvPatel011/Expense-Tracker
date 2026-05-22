@@ -293,8 +293,26 @@ document.getElementById('txForm').addEventListener('submit', (e) => {
 
   const data = { id: editingTxId, type, title, amount, category, date, notes };
 
-  if (editingTxId) { editTx(currentUser.id, data); toast('Transaction updated!'); }
-  else { createTx(currentUser.id, data); toast('Transaction added!'); }
+if (editingTxId) {
+
+  editTx(
+    currentUser.id,
+    data,
+    currentUser.currency
+  );
+
+  toast('Transaction updated!');
+
+} else {
+
+  createTx(
+    currentUser.id,
+    data,
+    currentUser.currency
+  );
+
+  toast('Transaction added!');
+}
 
   closeModal();
   refreshAll();
