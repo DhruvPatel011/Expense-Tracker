@@ -6,10 +6,40 @@
   <title>Tracklix – Smart Expense Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="icon" type="image/png" href="assets/images/image.png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/auth.css" />
+ 
+  <style>
+    /* ---- Demo button pill note ---- */
+    .demo-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: .73rem;
+      color: var(--text-muted, #94a3b8);
+      font-family: 'DM Sans', sans-serif;
+    }
+    .demo-note i { font-size: .7rem; }
+ 
+    /* Pulse on demo button hover */
+    .btn-demo {
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-demo::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,.06);
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .btn-demo:hover::after { opacity: 1; }
+  </style>
 </head>
 <body class="auth-body">
   <div class="auth-bg">
@@ -18,28 +48,28 @@
     <div class="orb orb-3"></div>
     <div class="grid-overlay"></div>
   </div>
-
+ 
   <div class="auth-container">
     <div class="auth-card">
       <div class="auth-brand">
-        <div class="brand-icon"><img src="assets/images/image.png" alt="Tracklix Logo"></i></div>
+        <div class="brand-icon"><img src="assets/images/image.png" alt="Tracklix Logo"></div>
         <span class="brand-name">Tracklix</span>
       </div>
       <h1 class="auth-title">Welcome back</h1>
       <p class="auth-subtitle">Sign in to your financial dashboard</p>
-
+ 
       <div id="loginAlert" class="alert hidden"></div>
-
+ 
       <form id="loginForm" class="auth-form" novalidate>
         <div class="field-group">
           <label for="loginEmail">Email address</label>
           <div class="input-wrap">
             <i class="fa-regular fa-envelope input-icon"></i>
-            <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" required />
+            <input type="email" id="loginEmail" placeholder="email@gmail.com" autocomplete="email" required />
           </div>
           <span class="field-error" id="emailError"></span>
         </div>
-
+ 
         <div class="field-group">
           <label for="loginPassword">Password</label>
           <div class="input-wrap">
@@ -49,7 +79,7 @@
           </div>
           <span class="field-error" id="passwordError"></span>
         </div>
-
+ 
         <div class="auth-row">
           <label class="checkbox-label">
             <input type="checkbox" id="rememberMe" />
@@ -57,70 +87,97 @@
             Remember me
           </label>
         </div>
-
+ 
         <button type="submit" class="btn-primary" id="loginBtn">
           <span class="btn-text">Sign In</span>
           <span class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
         </button>
       </form>
-
+ 
       <div class="auth-divider"><span>or</span></div>
-
+ 
       <button class="btn-demo" id="demoBtn">
         <i class="fa-solid fa-flask-vial"></i> Try Demo Account
       </button>
-
+ 
+      <!-- Small note under demo button -->
+      <p class="demo-note">
+        <i class="fa-regular fa-clock"></i>
+        Demo session lasts <strong>3 minutes</strong> — auto sign-out after that
+      </p>
+ 
       <p class="auth-link">
         Don't have an account? <a href="register.html">Create one free</a>
       </p>
     </div>
   </div>
-
+ 
   <script type="module">
     import { getUsers, setCurrentUser, getCurrentUser } from './js/storage.js';
-    import { seedDemoData } from './js/auth.js';
-
-    // Redirect if already logged in
-    if (getCurrentUser()) {
-      window.location.href = 'dashboard.html';
+    import { seedDemoData, getDemoTimeRemaining, isDemoSession, DEMO_DURATION_MS } from './js/auth.js';
+ 
+    // If already logged in as normal user → go to dashboard
+    // If already logged in as demo but session expired → sign out first
+    const existing = getCurrentUser();
+    if (existing) {
+      if (isDemoSession(existing)) {
+        if (getDemoTimeRemaining() > 0) {
+          // Demo still valid — resume
+          window.location.href = 'dashboard.html';
+        } else {
+          // Demo expired — clear and stay on login
+          import('./js/storage.js').then(({ clearCurrentUser }) => clearCurrentUser());
+          import('./js/auth.js').then(({ clearDemoExpiry }) => clearDemoExpiry());
+        }
+      } else {
+        window.location.href = 'dashboard.html';
+      }
     }
-
-    const form = document.getElementById('loginForm');
-    const alertBox = document.getElementById('loginAlert');
-    const togglePw = document.getElementById('togglePw');
-    const demoBtn = document.getElementById('demoBtn');
-
+ 
+    const form      = document.getElementById('loginForm');
+    const alertBox  = document.getElementById('loginAlert');
+    const togglePw  = document.getElementById('togglePw');
+    const demoBtn   = document.getElementById('demoBtn');
+ 
     togglePw.addEventListener('click', () => {
-      const pw = document.getElementById('loginPassword');
+      const pw   = document.getElementById('loginPassword');
       const icon = togglePw.querySelector('i');
-      if (pw.type === 'password') { pw.type = 'text'; icon.className = 'fa-regular fa-eye-slash'; }
-      else { pw.type = 'password'; icon.className = 'fa-regular fa-eye'; }
+      if (pw.type === 'password') {
+        pw.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+      } else {
+        pw.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+      }
     });
-
+ 
     function showAlert(msg, type = 'error') {
       alertBox.className = `alert alert-${type}`;
       alertBox.textContent = msg;
       alertBox.classList.remove('hidden');
     }
-
+ 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value.trim();
+      const email    = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
       const remember = document.getElementById('rememberMe').checked;
-
+ 
       if (!email || !password) { showAlert('Please fill in all fields.'); return; }
-
+ 
       const users = getUsers();
-      const user = users.find(u => u.email === email && u.password === btoa(password));
-
+      const user  = users.find(u => u.email === email && u.password === btoa(password));
+ 
       if (!user) { showAlert('Invalid email or password.'); return; }
-
+ 
       setCurrentUser(user.id, remember);
       window.location.href = 'dashboard.html';
     });
-
+ 
     demoBtn.addEventListener('click', () => {
+      demoBtn.disabled = true;
+      demoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Starting demo…';
+ 
       const demo = seedDemoData();
       setCurrentUser(demo.id, false);
       window.location.href = 'dashboard.html';

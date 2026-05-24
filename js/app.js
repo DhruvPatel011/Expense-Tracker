@@ -10,12 +10,113 @@ import { updateBudgetUI } from './budget.js';
 import { loadProfileForm, updateAvatarUIs, handleAvatarUpload } from './profile.js';
 import { initTheme, toggleTheme } from './theme.js';
 import { exportCSV, exportPDF } from './export.js';
+import { isDemoSession, getDemoTimeRemaining, clearDemoExpiry } from './auth.js';
  
 // ======================== INIT ========================
 let currentUser = getCurrentUser();
 if (!currentUser) { window.location.href = 'index.html'; throw new Error('Not logged in'); }
  
 initTheme();
+ 
+// ======================== DEMO TIMER ========================
+(function initDemoTimer() {
+  if (!isDemoSession(currentUser)) return;
+ 
+  // Create banner element
+  const banner = document.createElement('div');
+  banner.id = 'demoBanner';
+  banner.innerHTML = `
+    <i class="fa-solid fa-flask-vial"></i>
+    <span id="demoTimerText">Demo session: 3:00 remaining</span>
+    <span class="demo-badge">DEMO</span>
+  `;
+  document.body.appendChild(banner);
+ 
+  // Inject banner styles
+  const style = document.createElement('style');
+  style.textContent = `
+    #demoBanner {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: #1e293b;
+      color: #f1f5f9;
+      border-radius: 99px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .85rem;
+      font-weight: 600;
+      box-shadow: 0 8px 32px rgba(0,0,0,.35);
+      z-index: 9999;
+      white-space: nowrap;
+      border: 1px solid rgba(255,255,255,.08);
+      transition: background .3s ease;
+    }
+    #demoBanner i {
+      color: #06b6d4;
+      font-size: .9rem;
+    }
+    #demoBanner.warning {
+      background: #7c2d12;
+      border-color: rgba(239,68,68,.3);
+    }
+    #demoBanner.warning i { color: #f97316; }
+    .demo-badge {
+      background: #4f46e5;
+      color: white;
+      font-size: .65rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 99px;
+      letter-spacing: .08em;
+    }
+    #demoBanner.warning .demo-badge { background: #ef4444; }
+    @keyframes demoExpire {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.04); }
+    }
+    #demoBanner.expiring { animation: demoExpire .6s ease infinite; }
+  `;
+  document.head.appendChild(style);
+ 
+  function pad(n) { return String(n).padStart(2, '0'); }
+ 
+  function tick() {
+    const remaining = getDemoTimeRemaining();
+ 
+    if (remaining <= 0) {
+      // Session expired — sign out
+      clearDemoExpiry();
+      clearCurrentUser();
+      toast('Demo session ended. You have been signed out.', 'warning');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1800);
+      return;
+    }
+ 
+    const totalSec = Math.ceil(remaining / 1000);
+    const mins     = Math.floor(totalSec / 60);
+    const secs     = totalSec % 60;
+ 
+    document.getElementById('demoTimerText').textContent =
+      `Demo session: ${pad(mins)}:${pad(secs)} remaining`;
+ 
+    // Visual warning in last 60 seconds
+    if (remaining <= 60000) {
+      banner.classList.add('warning', 'expiring');
+    } else if (remaining <= 120000) {
+      banner.classList.add('warning');
+      banner.classList.remove('expiring');
+    }
+ 
+    setTimeout(tick, 1000);
+  }
+ 
+  tick();
+})();
  
 // ======================== STATE ========================
 let allTxs = [];
