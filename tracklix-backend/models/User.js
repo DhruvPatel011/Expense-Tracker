@@ -1,25 +1,25 @@
 // backend/models/User.js
-// Defines the User schema for MongoDB.
-// Passwords are NEVER stored as plain text — bcrypt hashing is applied in a pre-save hook.
-
+ 
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-
+ 
+// FIX: _id: false + id field optional (not required) to prevent
+// validation errors when transactions array is empty or during Google OAuth user creation.
 const TransactionSchema = new mongoose.Schema(
   {
+    id:       { type: String, default: () => `tx_${Date.now()}_${Math.random().toString(36).slice(2,7)}` },
     type:     { type: String, enum: ['income', 'expense'], required: true },
     title:    { type: String, required: true, trim: true },
-    amount:   { type: Number, required: true, min: 0 },   // Always stored in INR
+    amount:   { type: Number, required: true, min: 0 },
     category: { type: String, required: true },
-    date:     { type: String, required: true },           // 'YYYY-MM-DD'
+    date:     { type: String, required: true },
     notes:    { type: String, default: '' },
   },
-  { _id: true }
+  { _id: false }
 );
-
+ 
 const UserSchema = new mongoose.Schema(
   {
-    // ── Core Identity ──────────────────────────────────────────
     name: {
       type: String,
       required: [true, 'Name is required'],
@@ -37,83 +37,39 @@ const UserSchema = new mongoose.Schema(
     password: {
       type: String,
       minlength: [8, 'Password must be at least 8 characters'],
-      select: false, // Never return password in queries by default
+      select: false,
     },
-
-    // ── OAuth ──────────────────────────────────────────────────
-    googleId: {
-      type: String,
-      default: null,
-    },
-    authProvider: {
-      type: String,
-      enum: ['local', 'google'],
-      default: 'local',
-    },
-
-    // ── Profile ────────────────────────────────────────────────
-    avatar: {
-      type: String,
-      default: '', // base64 data-URI or empty string
-    },
-    currency: {
-      type: String,
-      enum: ['₹', '$'],
-      default: '₹',
-    },
-    theme: {
-      type: String,
-      enum: ['light', 'dark'],
-      default: 'light',
-    },
-
-    // ── Financial Data ─────────────────────────────────────────
-    budget: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    transactions: {
-      type: [TransactionSchema],
-      default: [],
-    },
-
-    // ── Settings ───────────────────────────────────────────────
+    googleId:     { type: String, default: null },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
+    avatar:       { type: String, default: '' },
+    currency:     { type: String, enum: ['₹', '$'], default: '₹' },
+    theme:        { type: String, enum: ['light', 'dark'], default: 'light' },
+    budget:       { type: Number, default: 0, min: 0 },
+    transactions: { type: [TransactionSchema], default: [] },
     settings: {
       notifications: { type: Boolean, default: true },
     },
-
-    // ── Security ───────────────────────────────────────────────
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
-    },
+    isEmailVerified: { type: Boolean, default: false },
   },
-  {
-    timestamps: true, // Adds createdAt & updatedAt
-  }
+  { timestamps: true }
 );
-
-// ── Pre-save hook: Hash password before saving ─────────────────
+ 
+// Hash password before saving
 UserSchema.pre('save', async function (next) {
-  // Only hash if the password field was actually modified
   if (!this.isModified('password') || !this.password) return next();
-
   try {
-    const salt = await bcrypt.genSalt(12); // Cost factor 12 = good security/performance balance
+    const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (err) {
     next(err);
   }
 });
-
-// ── Instance method: Compare entered password with hashed password ──
+ 
 UserSchema.methods.matchPassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };
-
-// ── Virtual: Safe public profile (excludes sensitive fields) ───
+ 
 UserSchema.methods.toPublicProfile = function () {
   const obj = this.toObject();
   delete obj.password;
@@ -121,6 +77,7 @@ UserSchema.methods.toPublicProfile = function () {
   delete obj.__v;
   return obj;
 };
-
+ 
 const User = mongoose.model('User', UserSchema);
 export default User;
+ 
