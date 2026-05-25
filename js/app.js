@@ -1,7 +1,7 @@
 // ===================== app.js =====================
 // Main initialization – orchestrates all modules
  
-import { getCurrentUser, clearCurrentUser, updateUser, clearAllUserData } from './storage.js';
+import { getCurrentUser, clearCurrentUser, updateUser, clearAllUserData, getTransactions, saveTransactions } from './storage.js';
 import { getUserTxs, createTx, editTx, removeTx, getCategoriesByType } from './transactions.js';
 import { applyFilters } from './filters.js';
 import { updateSummaryCards, renderTxList } from './dashboard.js';
@@ -22,7 +22,6 @@ initTheme();
 (function initDemoTimer() {
   if (!isDemoSession(currentUser)) return;
  
-  // Create banner element
   const banner = document.createElement('div');
   banner.id = 'demoBanner';
   banner.innerHTML = `
@@ -32,52 +31,27 @@ initTheme();
   `;
   document.body.appendChild(banner);
  
-  // Inject banner styles
   const style = document.createElement('style');
   style.textContent = `
     #demoBanner {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
-      background: #1e293b;
-      color: #f1f5f9;
-      border-radius: 99px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: .85rem;
-      font-weight: 600;
-      box-shadow: 0 8px 32px rgba(0,0,0,.35);
-      z-index: 9999;
-      white-space: nowrap;
-      border: 1px solid rgba(255,255,255,.08);
-      transition: background .3s ease;
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+      background: #1e293b; color: #f1f5f9; border-radius: 99px;
+      font-family: 'DM Sans', sans-serif; font-size: .85rem; font-weight: 600;
+      box-shadow: 0 8px 32px rgba(0,0,0,.35); z-index: 9999; white-space: nowrap;
+      border: 1px solid rgba(255,255,255,.08); transition: background .3s ease;
     }
-    #demoBanner i {
-      color: #06b6d4;
-      font-size: .9rem;
-    }
-    #demoBanner.warning {
-      background: #7c2d12;
-      border-color: rgba(239,68,68,.3);
-    }
+    #demoBanner i { color: #06b6d4; font-size: .9rem; }
+    #demoBanner.warning { background: #7c2d12; border-color: rgba(239,68,68,.3); }
     #demoBanner.warning i { color: #f97316; }
     .demo-badge {
-      background: #4f46e5;
-      color: white;
-      font-size: .65rem;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 99px;
-      letter-spacing: .08em;
+      background: #4f46e5; color: white; font-size: .65rem; font-weight: 800;
+      padding: 2px 8px; border-radius: 99px; letter-spacing: .08em;
     }
     #demoBanner.warning .demo-badge { background: #ef4444; }
     @keyframes demoExpire {
       0%, 100% { transform: translateX(-50%) scale(1); }
-      50% { transform: translateX(-50%) scale(1.04); }
+      50%       { transform: translateX(-50%) scale(1.04); }
     }
     #demoBanner.expiring { animation: demoExpire .6s ease infinite; }
   `;
@@ -87,34 +61,26 @@ initTheme();
  
   function tick() {
     const remaining = getDemoTimeRemaining();
- 
     if (remaining <= 0) {
-      // Session expired — sign out
       clearDemoExpiry();
       clearCurrentUser();
       toast('Demo session ended. You have been signed out.', 'warning');
       setTimeout(() => { window.location.href = 'index.html'; }, 1800);
       return;
     }
- 
     const totalSec = Math.ceil(remaining / 1000);
-    const mins     = Math.floor(totalSec / 60);
-    const secs     = totalSec % 60;
- 
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
     document.getElementById('demoTimerText').textContent =
       `Demo session: ${pad(mins)}:${pad(secs)} remaining`;
- 
-    // Visual warning in last 60 seconds
     if (remaining <= 60000) {
       banner.classList.add('warning', 'expiring');
     } else if (remaining <= 120000) {
       banner.classList.add('warning');
       banner.classList.remove('expiring');
     }
- 
     setTimeout(tick, 1000);
   }
- 
   tick();
 })();
  
@@ -146,23 +112,19 @@ function getFilteredTxs() {
   return applyFilters(allTxs, filterState);
 }
  
- 
 // ================= LIVE USD RATE =================
- 
 export let USD_RATE = 83.5;
  
 export async function fetchUSDRate() {
   try {
     const res = await fetch('https://open.er-api.com/v6/latest/USD');
     const data = await res.json();
- 
     if (data?.rates?.INR) {
       USD_RATE = data.rates.INR;
       localStorage.setItem('usd_rate', USD_RATE);
     }
   } catch (err) {
     console.log('Currency API failed');
-    // fallback saved rate
     USD_RATE = Number(localStorage.getItem('usd_rate')) || 83.5;
   }
 }
@@ -174,27 +136,15 @@ function refreshAll() {
   const filtered = getFilteredTxs();
   updateSummaryCards(allTxs, currentUser.currency);
  
-  // Overview
   renderTxList(allTxs, 'recentTxList', currentUser.currency, openEditModal, openDeleteConfirm, 8);
- 
-  // Income / Expense sections
-  renderTxList(allTxs.filter(t => t.type === 'income'), 'incomeTxList', currentUser.currency, openEditModal, openDeleteConfirm);
+  renderTxList(allTxs.filter(t => t.type === 'income'),  'incomeTxList',  currentUser.currency, openEditModal, openDeleteConfirm);
   renderTxList(allTxs.filter(t => t.type === 'expense'), 'expenseTxList', currentUser.currency, openEditModal, openDeleteConfirm);
- 
-  // All transactions with filters
   renderTxList(filtered, 'allTxList', currentUser.currency, openEditModal, openDeleteConfirm);
  
-  // Charts use all txs
   renderAllCharts(allTxs, currentUser.currency);
- 
-  // Budget
   updateBudgetUI(allTxs, currentUser);
- 
-  // Profile
   loadProfileForm(currentUser);
   updateAvatarUIs(currentUser);
- 
-  // Settings currency
   document.getElementById('settingsCurrency').value = currentUser.currency;
 }
  
@@ -205,19 +155,13 @@ const navItems = document.querySelectorAll('.nav-item');
 function navigateTo(sectionId) {
   sections.forEach(s => s.classList.remove('active'));
   navItems.forEach(n => n.classList.remove('active'));
- 
-  const target = document.getElementById(`section-${sectionId}`);
+  const target  = document.getElementById(`section-${sectionId}`);
   const navItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
- 
-  if (target) target.classList.add('active');
+  if (target)  target.classList.add('active');
   if (navItem) navItem.classList.add('active');
- 
   document.getElementById('pageTitle').textContent =
     sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
- 
-  // Lazy re-render charts when switching to analytics
   if (sectionId === 'analytics') { setTimeout(() => renderAllCharts(allTxs, currentUser.currency), 50); }
- 
   closeSidebar();
 }
  
@@ -225,7 +169,6 @@ navItems.forEach(item => {
   item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(item.dataset.section); });
 });
  
-// View All link in overview
 document.querySelectorAll('[data-section]').forEach(el => {
   if (el.tagName === 'BUTTON' && !el.classList.contains('nav-item')) {
     el.addEventListener('click', () => navigateTo(el.dataset.section));
@@ -233,26 +176,16 @@ document.querySelectorAll('[data-section]').forEach(el => {
 });
  
 // ================= PROFILE OPEN ON AVATAR CLICK =================
+function goToProfile() {
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  document.querySelector('[data-section="profile"]')?.classList.add('active');
+  document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+  document.getElementById('section-profile')?.classList.add('active');
+  document.getElementById('pageTitle').textContent = 'Profile';
+}
  
-// Header avatar
-document.getElementById('headerAvatar')
-  ?.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    document.querySelector('[data-section="profile"]')?.classList.add('active');
-    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-    document.getElementById('section-profile')?.classList.add('active');
-    document.getElementById('pageTitle').textContent = 'Profile';
-  });
- 
-// Sidebar avatar
-document.getElementById('sidebarAvatar')
-  ?.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    document.querySelector('[data-section="profile"]')?.classList.add('active');
-    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-    document.getElementById('section-profile')?.classList.add('active');
-    document.getElementById('pageTitle').textContent = 'Profile';
-  });
+document.getElementById('headerAvatar')?.addEventListener('click', goToProfile);
+document.getElementById('sidebarAvatar')?.addEventListener('click', goToProfile);
  
 // ======================== SIDEBAR ========================
 function openSidebar() {
@@ -281,6 +214,7 @@ function openModal(title = 'Add Transaction') {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('txModal').classList.add('open');
 }
+ 
 function closeModal() {
   document.getElementById('txModal').classList.remove('open');
   document.getElementById('txForm').reset();
@@ -322,16 +256,31 @@ function openAddModal(type = 'income') {
   document.getElementById('txDate').value = new Date().toISOString().slice(0, 10);
 }
  
+// ======================== EDIT MODAL ========================
+// ROOT FIX: allTxs mein t.id bhi check karo aur t._id bhi —
+// backend _id return karta hai, frontend id dhundta tha → modal silent fail hota tha
 function openEditModal(txId) {
-  const tx = allTxs.find(t => t.id === txId);
-  if (!tx) return;
-  editingTxId = txId;
+  // Normalize: txId string ho sakta hai ya ObjectId — dono se match karo
+  const tx = allTxs.find(t => {
+    const tId = t.id || (t._id ? t._id.toString() : null);
+    return tId === txId || tId === String(txId);
+  });
+ 
+  if (!tx) {
+    console.warn('openEditModal: transaction not found for id:', txId, 'allTxs:', allTxs);
+    toast('Could not find transaction. Please refresh.', 'error');
+    return;
+  }
+ 
+  // Store the normalized id for form submit
+  editingTxId = tx.id || (tx._id ? tx._id.toString() : null);
+ 
   openModal('Edit Transaction');
   setTxType(tx.type);
-  document.getElementById('txId').value = tx.id;
+ 
+  document.getElementById('txId').value = editingTxId;
   document.getElementById('txTitle').value = tx.title;
  
-  // FIX: amounts are stored in INR — convert back to display currency for the input field
   const displayAmount = currentUser.currency === '$'
     ? (tx.amount / USD_RATE).toFixed(2)
     : tx.amount;
@@ -347,32 +296,46 @@ document.getElementById('addExpenseBtn').addEventListener('click', () => openAdd
 document.getElementById('addTxBtn').addEventListener('click', () => openAddModal('income'));
  
 // ======================== SAVE TRANSACTION ========================
-document.getElementById('txForm').addEventListener('submit', (e) => {
+document.getElementById('txForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const type = document.getElementById('txType').value;
-  const title = document.getElementById('txTitle').value.trim();
-  const amount = parseFloat(document.getElementById('txAmount').value);
+ 
+  const type     = document.getElementById('txType').value;
+  const title    = document.getElementById('txTitle').value.trim();
+  const amount   = parseFloat(document.getElementById('txAmount').value);
   const category = document.getElementById('txCategory').value;
-  const date = document.getElementById('txDate').value;
-  const notes = document.getElementById('txNotes').value;
+  const date     = document.getElementById('txDate').value;
+  const notes    = document.getElementById('txNotes').value;
  
   if (!title || !amount || amount <= 0 || !date) {
-    toast('Please fill in all required fields.', 'error'); return;
+    toast('Please fill in all required fields.', 'error');
+    return;
   }
  
+  // Use editingTxId (normalized) — NOT the hidden input value which may be stale
   const data = { id: editingTxId, type, title, amount, category, date, notes };
  
-  // FIX: pass currentUser.currency so createTx/editTx can convert USD→INR before saving
-  if (editingTxId) {
-    editTx(currentUser._id || currentUser.id, data, currentUser.currency);
-    toast('Transaction updated!');
-  } else {
-    createTx(currentUser._id || currentUser.id, data, currentUser.currency);
-    toast('Transaction added!');
-  }
+  // Disable submit button to prevent double-click
+  const submitBtn = document.querySelector('#txForm [type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
  
-  closeModal();
-  refreshAll();
+  try {
+    if (editingTxId) {
+      await editTx(currentUser._id || currentUser.id, data, currentUser.currency);
+      toast('Transaction updated!');
+    } else {
+      await createTx(currentUser._id || currentUser.id, data, currentUser.currency);
+      toast('Transaction added!');
+    }
+    closeModal();
+    refreshAll();
+  } catch (err) {
+    console.error('Save transaction error:', err);
+    toast(err.isNetworkError
+      ? 'Cannot reach server. Check your connection.'
+      : (err.message || 'Failed to save transaction.'), 'error');
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 });
  
 // ======================== DELETE ========================
@@ -387,11 +350,15 @@ function closeDeleteConfirm() {
  
 document.getElementById('closeConfirm').addEventListener('click', closeDeleteConfirm);
 document.getElementById('cancelConfirm').addEventListener('click', closeDeleteConfirm);
-document.getElementById('confirmDelete').addEventListener('click', () => {
+document.getElementById('confirmDelete').addEventListener('click', async () => {
   if (pendingDeleteId) {
-    removeTx(currentUser._id || currentUser.id, pendingDeleteId);
-    toast('Transaction deleted.', 'warning');
-    refreshAll();
+    try {
+      await removeTx(currentUser._id || currentUser.id, pendingDeleteId);
+      toast('Transaction deleted.', 'warning');
+      refreshAll();
+    } catch (err) {
+      toast('Failed to delete. Please try again.', 'error');
+    }
   }
   closeDeleteConfirm();
 });
@@ -430,17 +397,14 @@ document.getElementById('dateTo').addEventListener('change', (e) => {
  
 document.getElementById('clearFiltersBtn').addEventListener('click', () => {
   filterState = { type: 'all', period: '', category: '', search: '', dateFrom: '', dateTo: '' };
- 
   document.getElementById('searchInput').value = '';
   document.getElementById('categoryFilter').value = '';
   document.getElementById('dateFrom').value = '';
   document.getElementById('dateTo').value = '';
- 
   document.querySelectorAll('.chip').forEach(chip => {
     chip.classList.remove('active');
-    if (chip.dataset.type === 'all') chip.classList.add('active');
+    if (chip.dataset.filter === 'all') chip.classList.add('active');
   });
- 
   refreshAll();
   toast('Filters cleared.', 'success');
 });
@@ -455,10 +419,7 @@ function applyAndRenderFiltered() {
 document.getElementById('saveBudgetBtn').addEventListener('click', () => {
   const val = parseFloat(document.getElementById('budgetInput').value);
   if (!val || val < 0) { toast('Enter a valid budget amount.', 'error'); return; }
- 
-  // FIX: budget input is in the user's display currency — always store internally as INR
   const budgetINR = currentUser.currency === '$' ? val * USD_RATE : val;
- 
   const updated = { ...currentUser, budget: budgetINR };
   updateUser(updated);
   currentUser = updated;
@@ -466,7 +427,6 @@ document.getElementById('saveBudgetBtn').addEventListener('click', () => {
   toast('Budget saved!');
 });
  
-// ======================== Clear Budget ========================
 document.getElementById('clearBudgetBtn').addEventListener('click', () => {
   currentUser = { ...currentUser, budget: 0 };
   updateUser(currentUser);
@@ -478,12 +438,10 @@ document.getElementById('clearBudgetBtn').addEventListener('click', () => {
 // ======================== PROFILE ========================
 document.getElementById('profileForm').addEventListener('submit', (e) => {
   e.preventDefault();
-  const name = document.getElementById('profileName').value.trim();
-  const email = document.getElementById('profileEmail').value.trim();
+  const name     = document.getElementById('profileName').value.trim();
+  const email    = document.getElementById('profileEmail').value.trim();
   const currency = document.getElementById('profileCurrency').value;
- 
   if (!name || !email) { toast('Name and email are required.', 'error'); return; }
- 
   const updated = { ...currentUser, name, email, currency };
   updateUser(updated);
   currentUser = updated;
@@ -510,11 +468,17 @@ document.getElementById('settingsCurrency').addEventListener('change', (e) => {
   toast('Currency updated!');
 });
  
-document.getElementById('resetDataBtn').addEventListener('click', () => {
+document.getElementById('resetDataBtn').addEventListener('click', async () => {
   if (confirm('⚠️ This will permanently delete all your transactions and reset your budget. Are you sure?')) {
-    clearAllUserData(currentUser._id || currentUser.id);
-    refreshAll();
-    toast('All data has been reset.', 'warning');
+    try {
+      // FIX: await backend reset BEFORE refreshAll — warna purana data dikhta hai
+      await clearAllUserData(currentUser._id || currentUser.id);
+      reloadUser();
+      refreshAll();
+      toast('All data has been reset.', 'warning');
+    } catch (err) {
+      toast('Failed to reset data. Please try again.', 'error');
+    }
   }
 });
  

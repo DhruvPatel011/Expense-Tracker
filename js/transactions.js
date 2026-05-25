@@ -19,23 +19,12 @@ import { USD_RATE } from './app.js';
 /* ===================== CATEGORIES ===================== */
  
 const INCOME_CATEGORIES = [
-  'Salary',
-  'Freelance',
-  'Business',
-  'Investment',
-  'Other'
+  'Salary', 'Freelance', 'Business', 'Investment', 'Other'
 ];
  
 const EXPENSE_CATEGORIES = [
-  'Food',
-  'Transport',
-  'Shopping',
-  'Bills',
-  'Entertainment',
-  'Health',
-  'Education',
-  'Travel',
-  'Others'
+  'Food', 'Transport', 'Shopping', 'Bills', 'Entertainment',
+  'Health', 'Education', 'Travel', 'Others'
 ];
  
 /* ===================== ICONS ===================== */
@@ -57,38 +46,22 @@ const CATEGORY_ICONS = {
   Others: 'fa-ellipsis',
 };
  
-/* ===================== ICON ===================== */
- 
 export function getCategoryIcon(cat) {
   return CATEGORY_ICONS[cat] || 'fa-circle';
 }
- 
-/* ===================== CATEGORY BY TYPE ===================== */
  
 export function getCategoriesByType(type) {
   return type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 }
  
 /* ===================== FORMAT CURRENCY ===================== */
-// Amounts are stored in INR. This function converts to the display currency.
-// currency = '₹' → display as INR (no conversion needed)
-// currency = '$' → divide by USD_RATE to get USD, then format
  
 export function formatCurrency(amount, currency = '₹') {
   let value = Number(amount) || 0;
- 
-  if (currency === '$') {
-    value = value / USD_RATE;
-  }
- 
+  if (currency === '$') value = value / USD_RATE;
   return new Intl.NumberFormat(
     currency === '$' ? 'en-US' : 'en-IN',
-    {
-      style: 'currency',
-      currency: currency === '$' ? 'USD' : 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }
+    { style: 'currency', currency: currency === '$' ? 'USD' : 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2 }
   ).format(value);
 }
  
@@ -96,67 +69,59 @@ export function formatCurrency(amount, currency = '₹') {
  
 export function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
  
 /* ===================== CREATE TX ===================== */
-// Receives amount in the user's display currency, converts to INR before storing.
+// FIX: async — awaits addTransaction (which awaits backend)
  
-export function createTx(userId, data, currency = '₹') {
+export async function createTx(userId, data, currency = '₹') {
   let amount = parseFloat(data.amount) || 0;
- 
-  // User typed in USD → convert to INR for storage
-  if (currency === '$') {
-    amount = amount * USD_RATE;
-  }
+  if (currency === '$') amount = amount * USD_RATE;
  
   const tx = {
     id: generateId('tx'),
     type: data.type,
     title: data.title.trim(),
-    amount,                       // always INR
+    amount,
     category: data.category,
     date: data.date,
     notes: data.notes?.trim() || '',
   };
  
-  addTransaction(userId, tx);
+  await addTransaction(userId, tx);
   return tx;
 }
  
 /* ===================== EDIT TX ===================== */
-// Same as createTx — receives display-currency amount, stores in INR.
+// FIX: async — awaits updateTransaction (which awaits backend)
+// BUG WAS HERE: updateTransaction is async in storage.js but was not being awaited.
+// This caused the optimistic cache update to get overwritten by stale backend data,
+// making edited values appear to vanish (or revert to old values).
  
-export function editTx(userId, data, currency = '₹') {
+export async function editTx(userId, data, currency = '₹') {
   let amount = parseFloat(data.amount) || 0;
- 
-  // User typed in USD → convert to INR for storage
-  if (currency === '$') {
-    amount = amount * USD_RATE;
-  }
+  if (currency === '$') amount = amount * USD_RATE;
  
   const tx = {
     id: data.id,
     type: data.type,
     title: data.title.trim(),
-    amount,                       // always INR
+    amount,
     category: data.category,
     date: data.date,
     notes: data.notes?.trim() || '',
   };
  
-  updateTransaction(userId, tx);
+  await updateTransaction(userId, tx);
   return tx;
 }
  
 /* ===================== DELETE TX ===================== */
+// FIX: async — awaits deleteTransaction
  
-export function removeTx(userId, txId) {
-  deleteTransaction(userId, txId);
+export async function removeTx(userId, txId) {
+  await deleteTransaction(userId, txId);
 }
  
 /* ===================== USER TXS ===================== */
@@ -167,16 +132,12 @@ export function getUserTxs(userId) {
 }
  
 /* ===================== TOTALS ===================== */
-// Returns totals in INR (raw storage values). Callers convert for display.
  
 export function getTotals(txs) {
-  let income = 0;
-  let expense = 0;
- 
+  let income = 0, expense = 0;
   txs.forEach(t => {
     if (t.type === 'income') income += Number(t.amount) || 0;
     else if (t.type === 'expense') expense += Number(t.amount) || 0;
   });
- 
   return { income, expense, balance: income - expense };
 }
