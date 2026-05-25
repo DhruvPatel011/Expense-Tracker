@@ -1,41 +1,48 @@
 // ===================== auth.js =====================
-import { getUsers, saveUsers, generateId, saveTransactions } from './storage.js';
+// Authentication helpers. Demo session logic is preserved.
+// All real auth (register/login) now goes through backend API via storage.js.
  
-export const DEMO_DURATION_MS = 3 * 60 * 1000; // 5 minutes
+import { generateId, apiUpdateTransactions, getCachedUser, setCachedUser } from './storage.js';
+ 
+export const DEMO_DURATION_MS = 3 * 60 * 1000; // 3 minutes
 export const DEMO_EMAIL       = 'demo@tracklix.app';
 export const DEMO_EXPIRY_KEY  = 'demo_expires_at';
  
+/**
+ * Seeds a temporary demo user entirely in memory (no backend call).
+ * The demo user lives only in localStorage for the session duration.
+ */
 export function seedDemoData() {
-  const users = getUsers();
-  let demo = users.find(u => u.email === DEMO_EMAIL);
+  // Create a demo user object in cache
+  const demoUser = {
+    _id: 'demo_user_local',
+    id: 'demo_user_local',          // alias used by some modules
+    name: 'Demo User',
+    email: DEMO_EMAIL,
+    currency: '₹',
+    avatar: '',
+    theme: 'light',
+    budget: 50000,
+    transactions: _buildDemoTransactions(),
+    authProvider: 'demo',
+  };
  
-  if (!demo) {
-    demo = {
-      id: generateId('u'),
-      name: 'Demo User',
-      email: DEMO_EMAIL,
-      password: btoa('demo1234'),
-      currency: '₹',
-      avatar: '',
-      theme: 'light',
-      budget: 50000,
-    };
-    users.push(demo);
-    saveUsers(users);
-  }
+  setCachedUser(demoUser);
  
   // Store demo session expiry timestamp
   const expiresAt = Date.now() + DEMO_DURATION_MS;
   localStorage.setItem(DEMO_EXPIRY_KEY, String(expiresAt));
  
-  // Seed realistic transactions
+  return demoUser;
+}
+ 
+function _buildDemoTransactions() {
   const now = new Date();
+  const txs = [];
  
   const incomes = [];
  
   const expenses = [];
- 
-  const txs = [];
  
   incomes.forEach(i => {
     const d = new Date(now);
@@ -65,8 +72,7 @@ export function seedDemoData() {
     });
   });
  
-  saveTransactions(demo.id, txs);
-  return demo;
+  return txs;
 }
  
 /** Returns ms remaining in the demo session, or 0 if expired / not a demo session */
@@ -77,7 +83,7 @@ export function getDemoTimeRemaining() {
  
 /** Returns true if the current user is the demo account */
 export function isDemoSession(user) {
-  return user?.email === DEMO_EMAIL;
+  return user?.email === DEMO_EMAIL || user?.authProvider === 'demo';
 }
  
 /** Clears the demo expiry marker */

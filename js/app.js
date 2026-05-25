@@ -139,7 +139,7 @@ function reloadUser() {
 }
  
 function loadTxs() {
-  allTxs = getUserTxs(currentUser.id);
+  allTxs = getUserTxs(currentUser._id || currentUser.id);
 }
  
 function getFilteredTxs() {
@@ -364,10 +364,10 @@ document.getElementById('txForm').addEventListener('submit', (e) => {
  
   // FIX: pass currentUser.currency so createTx/editTx can convert USD→INR before saving
   if (editingTxId) {
-    editTx(currentUser.id, data, currentUser.currency);
+    editTx(currentUser._id || currentUser.id, data, currentUser.currency);
     toast('Transaction updated!');
   } else {
-    createTx(currentUser.id, data, currentUser.currency);
+    createTx(currentUser._id || currentUser.id, data, currentUser.currency);
     toast('Transaction added!');
   }
  
@@ -389,7 +389,7 @@ document.getElementById('closeConfirm').addEventListener('click', closeDeleteCon
 document.getElementById('cancelConfirm').addEventListener('click', closeDeleteConfirm);
 document.getElementById('confirmDelete').addEventListener('click', () => {
   if (pendingDeleteId) {
-    removeTx(currentUser.id, pendingDeleteId);
+    removeTx(currentUser._id || currentUser.id, pendingDeleteId);
     toast('Transaction deleted.', 'warning');
     refreshAll();
   }
@@ -512,7 +512,7 @@ document.getElementById('settingsCurrency').addEventListener('change', (e) => {
  
 document.getElementById('resetDataBtn').addEventListener('click', () => {
   if (confirm('⚠️ This will permanently delete all your transactions and reset your budget. Are you sure?')) {
-    clearAllUserData(currentUser.id);
+    clearAllUserData(currentUser._id || currentUser.id);
     refreshAll();
     toast('All data has been reset.', 'warning');
   }

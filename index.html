@@ -12,33 +12,87 @@
   <link rel="stylesheet" href="css/auth.css" />
  
   <style>
-    /* ---- Demo button pill note ---- */
     .demo-note {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 8px;
-      font-size: .73rem;
-      color: var(--text-muted, #94a3b8);
-      font-family: 'DM Sans', sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; margin-top: 8px; font-size: .73rem;
+      color: var(--text-muted, #94a3b8); font-family: 'DM Sans', sans-serif;
     }
     .demo-note i { font-size: .7rem; }
- 
-    /* Pulse on demo button hover */
-    .btn-demo {
-      position: relative;
-      overflow: hidden;
-    }
+    .btn-demo { position: relative; overflow: hidden; }
     .btn-demo::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,.06);
-      opacity: 0;
-      transition: opacity .2s;
+      content: ''; position: absolute; inset: 0;
+      background: rgba(255,255,255,.06); opacity: 0; transition: opacity .2s;
     }
     .btn-demo:hover::after { opacity: 1; }
+ 
+    /* Google OAuth button */
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 12px 20px; border: 1.5px solid #e2e8f0;
+      border-radius: 10px; background: #fff; color: #1e293b;
+      font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 500;
+      cursor: pointer; transition: background .15s, border-color .15s;
+      text-decoration: none; margin-bottom: 8px;
+    }
+    .btn-google:hover { background: #f8fafc; border-color: #94a3b8; }
+    .btn-google img { width: 18px; height: 18px; }
+ 
+    /* Forgot password link */
+    .forgot-link {
+      font-size: .8rem; color: #4f46e5; text-decoration: none;
+      font-family: 'DM Sans', sans-serif; float: right;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+ 
+    /* Forgot password modal */
+    .fp-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .fp-overlay.open { display: flex; }
+    .fp-modal {
+      background: var(--card-bg, #fff); border-radius: 16px;
+      padding: 36px; width: 100%; max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2); position: relative;
+    }
+    .fp-close {
+      position: absolute; top: 16px; right: 16px;
+      background: none; border: none; font-size: 1.1rem;
+      cursor: pointer; color: #64748b;
+    }
+    .fp-step { display: none; }
+    .fp-step.active { display: block; }
+    .fp-title { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
+    .fp-desc { font-size: .85rem; color: #64748b; margin-bottom: 20px; }
+    .fp-input-group { margin-bottom: 16px; }
+    .fp-input-group label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 6px; color: #374151; }
+    .fp-input-group input {
+      width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0;
+      border-radius: 8px; font-size: .9rem; outline: none;
+      box-sizing: border-box; transition: border-color .2s;
+    }
+    .fp-input-group input:focus { border-color: #4f46e5; }
+    .fp-btn {
+      width: 100%; padding: 12px; background: #4f46e5; color: #fff;
+      border: none; border-radius: 10px; font-size: .9rem; font-weight: 600;
+      cursor: pointer; transition: opacity .2s;
+    }
+    .fp-btn:hover { opacity: .9; }
+    .fp-alert { font-size: .82rem; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; display: none; }
+    .fp-alert.error { background: #fef2f2; color: #dc2626; display: block; }
+    .fp-alert.success { background: #f0fdf4; color: #16a34a; display: block; }
+    .otp-inputs { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+    .otp-inputs input {
+      width: 44px; height: 52px; text-align: center;
+      font-size: 1.4rem; font-weight: 700; border: 1.5px solid #e2e8f0;
+      border-radius: 8px; outline: none;
+    }
+    .otp-inputs input:focus { border-color: #4f46e5; }
+    .pw-strength { margin-top: 6px; }
+    .pw-bar { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; }
+    .pw-fill { height: 100%; width: 0; transition: width .3s, background .3s; border-radius: 2px; }
+    #fpPwLabel { font-size: .75rem; margin-top: 4px; display: block; }
   </style>
 </head>
 <body class="auth-body">
@@ -58,7 +112,7 @@
       <h1 class="auth-title">Welcome back</h1>
       <p class="auth-subtitle">Sign in to your financial dashboard</p>
  
-      <div id="loginAlert" class="alert hidden"></div>
+
  
       <form id="loginForm" class="auth-form" novalidate>
         <div class="field-group">
@@ -71,12 +125,16 @@
         </div>
  
         <div class="field-group">
-          <label for="loginPassword">Password</label>
+          <label for="loginPassword">
+            Password
+            
+          </label>
           <div class="input-wrap">
             <i class="fa-solid fa-lock input-icon"></i>
             <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required />
             <button type="button" class="toggle-pw" id="togglePw"><i class="fa-regular fa-eye"></i></button>
           </div>
+          <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
           <span class="field-error" id="passwordError"></span>
         </div>
  
@@ -93,14 +151,22 @@
           <span class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
         </button>
       </form>
+      
+      <div id="loginAlert" class="alert hidden"></div>
+      <div class="auth-divider"><span>or sign in with email</span></div>
+      <!-- Google OAuth -->
+      <a href="http://localhost:5000/api/auth/google" class="btn-google">
+        <img src="https://www.google.com/favicon.ico" alt="Google" />
+        Continue with Google
+      </a>
  
+      
       <div class="auth-divider"><span>or</span></div>
  
       <button class="btn-demo" id="demoBtn">
         <i class="fa-solid fa-flask-vial"></i> Try Demo Account
       </button>
  
-      <!-- Small note under demo button -->
       <p class="demo-note">
         <i class="fa-regular fa-clock"></i>
         Demo session lasts <strong>3 minutes</strong> — auto sign-out after that
@@ -112,52 +178,118 @@
     </div>
   </div>
  
-  <script type="module">
-    import { getUsers, setCurrentUser, getCurrentUser } from './js/storage.js';
-    import { seedDemoData, getDemoTimeRemaining, isDemoSession, DEMO_DURATION_MS } from './js/auth.js';
+  <!-- ── Forgot Password Modal ─────────────────────────── -->
+  <div class="fp-overlay" id="fpOverlay">
+    <div class="fp-modal">
+      <button class="fp-close" id="fpClose"><i class="fa-solid fa-xmark"></i></button>
  
-    // If already logged in as normal user → go to dashboard
-    // If already logged in as demo but session expired → sign out first
-    const existing = getCurrentUser();
+      <!-- Step 1: Enter Email -->
+      <div class="fp-step active" id="fpStep1">
+        <div class="fp-title">🔐 Forgot Password?</div>
+        <div class="fp-desc">Enter your registered email and we'll send a 6-digit OTP.</div>
+        <div class="fp-alert" id="fpAlert1"></div>
+        <div class="fp-input-group">
+          <label>Email Address</label>
+          <input type="email" id="fpEmail" placeholder="you@example.com" />
+        </div>
+        <button class="fp-btn" id="fpSendOTP">
+          <span id="fpSendText">Send OTP</span>
+        </button>
+      </div>
+ 
+      <!-- Step 2: Verify OTP -->
+      <div class="fp-step" id="fpStep2">
+        <div class="fp-title">📩 Check Your Email</div>
+        <div class="fp-desc">Enter the 6-digit OTP sent to <strong id="fpEmailDisplay"></strong></div>
+        <div class="fp-alert" id="fpAlert2"></div>
+        <div class="otp-inputs">
+          <input type="text" maxlength="1" class="otp-digit" />
+          <input type="text" maxlength="1" class="otp-digit" />
+          <input type="text" maxlength="1" class="otp-digit" />
+          <input type="text" maxlength="1" class="otp-digit" />
+          <input type="text" maxlength="1" class="otp-digit" />
+          <input type="text" maxlength="1" class="otp-digit" />
+        </div>
+        <button class="fp-btn" id="fpVerifyOTP">Verify OTP</button>
+        <p style="text-align:center;font-size:.8rem;margin-top:12px;color:#64748b">
+          Didn't get it? <a href="#" id="fpResend" style="color:#4f46e5">Resend OTP</a>
+        </p>
+      </div>
+ 
+      <!-- Step 3: Set New Password -->
+      <div class="fp-step" id="fpStep3">
+        <div class="fp-title">🔑 Set New Password</div>
+        <div class="fp-desc">Choose a strong new password for your account.</div>
+        <div class="fp-alert" id="fpAlert3"></div>
+        <div class="fp-input-group">
+          <label>New Password</label>
+          <input type="password" id="fpNewPw" placeholder="Min 8 characters" />
+          <div class="pw-strength">
+            <div class="pw-bar"><div class="pw-fill" id="fpPwFill"></div></div>
+            <span id="fpPwLabel"></span>
+          </div>
+        </div>
+        <div class="fp-input-group">
+          <label>Confirm Password</label>
+          <input type="password" id="fpConfirmPw" placeholder="Repeat password" />
+        </div>
+        <button class="fp-btn" id="fpResetPw">Reset Password</button>
+      </div>
+    </div>
+  </div>
+ 
+  <script type="module">
+    import {
+      apiLogin, getCachedUser, clearCurrentUser, clearToken,
+      apiSendOTP, apiVerifyOTP, apiResetPassword
+    } from './js/storage.js';
+    import {
+      seedDemoData, getDemoTimeRemaining, isDemoSession, clearDemoExpiry
+    } from './js/auth.js';
+ 
+    // ── Check for URL error params ─────────────────────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('error') === 'google_failed') {
+      document.getElementById('loginAlert').className = 'alert alert-error';
+      document.getElementById('loginAlert').textContent = 'Google sign-in failed. Please try again.';
+      document.getElementById('loginAlert').classList.remove('hidden');
+    }
+ 
+    // ── Redirect if already logged in ─────────────────────────
+    const existing = getCachedUser();
     if (existing) {
       if (isDemoSession(existing)) {
-        if (getDemoTimeRemaining() > 0) {
-          // Demo still valid — resume
-          window.location.href = 'dashboard.html';
-        } else {
-          // Demo expired — clear and stay on login
-          import('./js/storage.js').then(({ clearCurrentUser }) => clearCurrentUser());
-          import('./js/auth.js').then(({ clearDemoExpiry }) => clearDemoExpiry());
-        }
+        if (getDemoTimeRemaining() > 0) { window.location.href = 'dashboard.html'; }
+        else { clearCurrentUser(); clearDemoExpiry(); }
       } else {
         window.location.href = 'dashboard.html';
       }
     }
  
-    const form      = document.getElementById('loginForm');
-    const alertBox  = document.getElementById('loginAlert');
-    const togglePw  = document.getElementById('togglePw');
-    const demoBtn   = document.getElementById('demoBtn');
- 
-    togglePw.addEventListener('click', () => {
-      const pw   = document.getElementById('loginPassword');
-      const icon = togglePw.querySelector('i');
-      if (pw.type === 'password') {
-        pw.type = 'text';
-        icon.className = 'fa-regular fa-eye-slash';
-      } else {
-        pw.type = 'password';
-        icon.className = 'fa-regular fa-eye';
-      }
+    // ── Toggle password visibility ─────────────────────────────
+    document.getElementById('togglePw').addEventListener('click', () => {
+      const pw = document.getElementById('loginPassword');
+      const icon = document.querySelector('#togglePw i');
+      pw.type = pw.type === 'password' ? 'text' : 'password';
+      icon.className = pw.type === 'password' ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
     });
  
     function showAlert(msg, type = 'error') {
-      alertBox.className = `alert alert-${type}`;
-      alertBox.textContent = msg;
-      alertBox.classList.remove('hidden');
+      const box = document.getElementById('loginAlert');
+      box.className = `alert alert-${type}`;
+      box.textContent = msg;
+      box.classList.remove('hidden');
     }
  
-    form.addEventListener('submit', (e) => {
+    function setLoading(loading) {
+      const btn = document.getElementById('loginBtn');
+      btn.querySelector('.btn-text').classList.toggle('hidden', loading);
+      btn.querySelector('.btn-loader').classList.toggle('hidden', !loading);
+      btn.disabled = loading;
+    }
+ 
+    // ── Login Form ─────────────────────────────────────────────
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email    = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -165,22 +297,155 @@
  
       if (!email || !password) { showAlert('Please fill in all fields.'); return; }
  
-      const users = getUsers();
-      const user  = users.find(u => u.email === email && u.password === btoa(password));
+      setLoading(true);
+      try {
+        await apiLogin({ email, password, remember });
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        showAlert(err.message || 'Invalid email or password.');
+      } finally {
+        setLoading(false);
+      }
+    });
  
-      if (!user) { showAlert('Invalid email or password.'); return; }
- 
-      setCurrentUser(user.id, remember);
+    // ── Demo Button ────────────────────────────────────────────
+    document.getElementById('demoBtn').addEventListener('click', () => {
+      const btn = document.getElementById('demoBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Starting demo…';
+      seedDemoData();
       window.location.href = 'dashboard.html';
     });
  
-    demoBtn.addEventListener('click', () => {
-      demoBtn.disabled = true;
-      demoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Starting demo…';
+    // ════════════════════════════════════════════════════════════
+    // FORGOT PASSWORD FLOW
+    // ════════════════════════════════════════════════════════════
  
-      const demo = seedDemoData();
-      setCurrentUser(demo.id, false);
-      window.location.href = 'dashboard.html';
+    const fpOverlay = document.getElementById('fpOverlay');
+    let fpEmail = '';
+    let fpOTP   = '';
+ 
+    function openFP() { fpOverlay.classList.add('open'); }
+    function closeFP() { fpOverlay.classList.remove('open'); }
+ 
+    document.getElementById('forgotLink').addEventListener('click', (e) => {
+      e.preventDefault(); openFP();
+    });
+    document.getElementById('fpClose').addEventListener('click', closeFP);
+    fpOverlay.addEventListener('click', (e) => { if (e.target === fpOverlay) closeFP(); });
+ 
+    function fpShowAlert(stepNum, msg, type = 'error') {
+      const el = document.getElementById(`fpAlert${stepNum}`);
+      el.className = `fp-alert ${type}`;
+      el.textContent = msg;
+    }
+ 
+    function fpGoTo(step) {
+      document.querySelectorAll('.fp-step').forEach(s => s.classList.remove('active'));
+      document.getElementById(`fpStep${step}`).classList.add('active');
+    }
+ 
+    // ── Step 1: Send OTP ───────────────────────────────────────
+    document.getElementById('fpSendOTP').addEventListener('click', async () => {
+      fpEmail = document.getElementById('fpEmail').value.trim();
+      if (!fpEmail) { fpShowAlert(1, 'Please enter your email.'); return; }
+ 
+      const btn = document.getElementById('fpSendOTP');
+      btn.disabled = true;
+      document.getElementById('fpSendText').textContent = 'Sending…';
+ 
+      try {
+        await apiSendOTP(fpEmail);
+        document.getElementById('fpEmailDisplay').textContent = fpEmail;
+        fpGoTo(2);
+      } catch (err) {
+        fpShowAlert(1, err.message || 'Failed to send OTP. Try again.');
+      } finally {
+        btn.disabled = false;
+        document.getElementById('fpSendText').textContent = 'Send OTP';
+      }
+    });
+ 
+    // ── OTP digit input auto-advance ──────────────────────────
+    document.querySelectorAll('.otp-digit').forEach((input, idx, all) => {
+      input.addEventListener('input', () => {
+        if (input.value && idx < all.length - 1) all[idx + 1].focus();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value && idx > 0) all[idx - 1].focus();
+      });
+    });
+ 
+    // ── Step 2: Verify OTP ────────────────────────────────────
+    document.getElementById('fpVerifyOTP').addEventListener('click', async () => {
+      const digits = [...document.querySelectorAll('.otp-digit')].map(i => i.value).join('');
+      if (digits.length !== 6) { fpShowAlert(2, 'Please enter the 6-digit OTP.'); return; }
+ 
+      fpOTP = digits;
+      const btn = document.getElementById('fpVerifyOTP');
+      btn.disabled = true; btn.textContent = 'Verifying…';
+ 
+      try {
+        await apiVerifyOTP(fpEmail, fpOTP);
+        fpGoTo(3);
+      } catch (err) {
+        fpShowAlert(2, err.message || 'Incorrect OTP. Please try again.');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Verify OTP';
+      }
+    });
+ 
+    // ── Resend OTP ─────────────────────────────────────────────
+    document.getElementById('fpResend').addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await apiSendOTP(fpEmail);
+        fpShowAlert(2, 'OTP resent! Check your email.', 'success');
+        document.querySelectorAll('.otp-digit').forEach(i => i.value = '');
+        document.querySelector('.otp-digit').focus();
+      } catch (err) {
+        fpShowAlert(2, 'Failed to resend OTP.');
+      }
+    });
+ 
+    // ── Password strength meter ────────────────────────────────
+    document.getElementById('fpNewPw').addEventListener('input', (e) => {
+      const v = e.target.value;
+      let score = 0;
+      if (v.length >= 8) score++;
+      if (/[A-Z]/.test(v)) score++;
+      if (/[0-9]/.test(v)) score++;
+      if (/[^a-zA-Z0-9]/.test(v)) score++;
+      const fill   = document.getElementById('fpPwFill');
+      const label  = document.getElementById('fpPwLabel');
+      const colors = ['', '#ef4444', '#f59e0b', '#06b6d4', '#10b981'];
+      const levels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+      fill.style.width = (score * 25) + '%';
+      fill.style.background = colors[score];
+      label.textContent = levels[score] || '';
+      label.style.color = colors[score];
+    });
+ 
+    // ── Step 3: Reset Password ─────────────────────────────────
+    document.getElementById('fpResetPw').addEventListener('click', async () => {
+      const newPw  = document.getElementById('fpNewPw').value;
+      const confirm = document.getElementById('fpConfirmPw').value;
+ 
+      if (newPw.length < 8)     { fpShowAlert(3, 'Password must be at least 8 characters.'); return; }
+      if (newPw !== confirm)     { fpShowAlert(3, 'Passwords do not match.'); return; }
+ 
+      const btn = document.getElementById('fpResetPw');
+      btn.disabled = true; btn.textContent = 'Resetting…';
+ 
+      try {
+        await apiResetPassword(fpEmail, fpOTP, newPw);
+        fpShowAlert(3, '✅ Password reset successfully! You can now log in.', 'success');
+        setTimeout(closeFP, 2500);
+      } catch (err) {
+        fpShowAlert(3, err.message || 'Password reset failed. Try again.');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Reset Password';
+      }
     });
   </script>
 </body>

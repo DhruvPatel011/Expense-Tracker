@@ -10,6 +10,19 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/auth.css" />
+  <style>
+    /* Google OAuth button */
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 12px 20px; border: 1.5px solid #e2e8f0;
+      border-radius: 10px; background: #fff; color: #1e293b;
+      font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 500;
+      cursor: pointer; transition: background .15s, border-color .15s;
+      text-decoration: none; margin-bottom: 8px;
+    }
+    .btn-google:hover { background: #f8fafc; border-color: #94a3b8; }
+    .btn-google img { width: 18px; height: 18px; }
+  </style>
 </head>
 <body class="auth-body">
   <div class="auth-bg">
@@ -18,7 +31,7 @@
     <div class="orb orb-3"></div>
     <div class="grid-overlay"></div>
   </div>
-
+ 
   <div class="auth-container">
     <div class="auth-card auth-card--wide">
       <div class="auth-brand">
@@ -27,9 +40,17 @@
       </div>
       <h1 class="auth-title">Create account</h1>
       <p class="auth-subtitle">Start managing your finances smarter</p>
-
+ 
       <div id="regAlert" class="alert hidden"></div>
-
+ 
+      <!-- Google OAuth -->
+      <a href="http://localhost:5000/api/auth/google" class="btn-google">
+        <img src="https://www.google.com/favicon.ico" alt="Google" />
+        Sign up with Google
+      </a>
+ 
+      <div class="auth-divider"><span>or register with email</span></div>
+ 
       <form id="registerForm" class="auth-form" novalidate>
         <div class="form-row">
           <div class="field-group">
@@ -49,7 +70,7 @@
             <span class="field-error" id="emailError"></span>
           </div>
         </div>
-
+ 
         <div class="form-row">
           <div class="field-group">
             <label for="regPassword">Password</label>
@@ -74,7 +95,7 @@
             <span class="field-error" id="confirmError"></span>
           </div>
         </div>
-
+ 
         <div class="field-group">
           <label for="regCurrency">Preferred Currency</label>
           <div class="input-wrap">
@@ -85,21 +106,22 @@
             </select>
           </div>
         </div>
-
-        <button type="submit" class="btn-primary">
+ 
+        <button type="submit" class="btn-primary" id="regBtn">
           <span class="btn-text">Create Account</span>
+          <span class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
         </button>
       </form>
-
+ 
       <p class="auth-link">
         Already have an account? <a href="index.html">Sign in</a>
       </p>
     </div>
   </div>
-
+ 
   <script type="module">
-    import { getUsers, saveUsers } from './js/storage.js';
-
+    import { apiRegister } from './js/storage.js';
+ 
     function togglePw(btnId, inputId) {
       document.getElementById(btnId).addEventListener('click', () => {
         const el = document.getElementById(inputId);
@@ -110,7 +132,7 @@
     }
     togglePw('togglePw1', 'regPassword');
     togglePw('togglePw2', 'regConfirm');
-
+ 
     // Password strength
     document.getElementById('regPassword').addEventListener('input', (e) => {
       const v = e.target.value;
@@ -119,7 +141,7 @@
       if (/[A-Z]/.test(v)) score++;
       if (/[0-9]/.test(v)) score++;
       if (/[^a-zA-Z0-9]/.test(v)) score++;
-      const fill = document.getElementById('pwFill');
+      const fill  = document.getElementById('pwFill');
       const label = document.getElementById('pwLabel');
       const levels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
       const colors = ['', '#ef4444', '#f59e0b', '#06b6d4', '#10b981'];
@@ -128,43 +150,49 @@
       label.textContent = levels[score] || '';
       label.style.color = colors[score];
     });
-
-    document.getElementById('registerForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('regName').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const password = document.getElementById('regPassword').value;
-      const confirm = document.getElementById('regConfirm').value;
-      const currency = document.getElementById('regCurrency').value;
+ 
+    function showAlert(msg, type = 'error') {
       const alert = document.getElementById('regAlert');
-
-      function showAlert(msg, type = 'error') {
-        alert.className = `alert alert-${type}`;
-        alert.textContent = msg;
-        alert.classList.remove('hidden');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = msg;
+      alert.classList.remove('hidden');
+    }
+ 
+    function setLoading(loading) {
+      const btn = document.getElementById('regBtn');
+      btn.querySelector('.btn-text').classList.toggle('hidden', loading);
+      btn.querySelector('.btn-loader').classList.toggle('hidden', !loading);
+      btn.disabled = loading;
+    }
+ 
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name     = document.getElementById('regName').value.trim();
+      const email    = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm  = document.getElementById('regConfirm').value;
+      const currency = document.getElementById('regCurrency').value;
+ 
+      if (!name || !email || !password || !confirm) {
+        showAlert('All fields are required.'); return;
       }
-
-      if (!name || !email || !password || !confirm) return showAlert('All fields are required.');
-      if (password.length < 8) return showAlert('Password must be at least 8 characters.');
-      if (password !== confirm) return showAlert('Passwords do not match.');
-
-      const users = getUsers();
-      if (users.find(u => u.email === email)) return showAlert('Email already registered.');
-
-      const newUser = {
-        id: 'u_' + Date.now(),
-        name, email,
-        password: btoa(password),
-        currency,
-        avatar: '',
-        theme: 'light',
-        budget: 0
-      };
-      users.push(newUser);
-      saveUsers(users);
-
-      showAlert('Account created! Redirecting to login…', 'success');
-      setTimeout(() => window.location.href = 'index.html', 1500);
+      if (password.length < 8) {
+        showAlert('Password must be at least 8 characters.'); return;
+      }
+      if (password !== confirm) {
+        showAlert('Passwords do not match.'); return;
+      }
+ 
+      setLoading(true);
+      try {
+        await apiRegister({ name, email, password, currency });
+        showAlert('Account created! Redirecting to dashboard…', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 1200);
+      } catch (err) {
+        showAlert(err.message || 'Registration failed. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     });
   </script>
 </body>
