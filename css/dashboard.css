@@ -13,7 +13,6 @@ body {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   position: fixed;
   left: 0; top: 0; bottom: 0;
   z-index: 200;
@@ -109,7 +108,7 @@ display: none;
 
 /* ---- Sidebar Nav ---- */
 .sidebar-nav {
-  flex: 0 0 auto;
+  flex: 1;
   padding: 16px 12px;
   display: flex;
   flex-direction: column;
@@ -155,7 +154,7 @@ display: none;
 /* ---- Sidebar Footer ---- */
 .sidebar-footer{
   padding:16px 12px 20px;
-  margin-top:16px;
+  margin-top:auto;
   border-top:none;
 }
 
@@ -1280,23 +1279,4 @@ canvas#barChart {
 
   box-shadow:
     0 0 0 3px rgba(255,255,255,.04);
-}
-
-/* ===== FIX SIGN OUT BUTTON POSITIONING ===== */
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start; /* Don't stretch children */
-}
-
-.sidebar-nav {
-  flex: 0 0 auto;   /* Stop nav from stretching */
-  overflow-y: auto;
-}
-
-.sidebar-footer {
-  margin-top: 16px;  /* Small natural gap */
-  padding: 16px 12px 20px;
-  border-top: 1px solid var(--border);
 }
