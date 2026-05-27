@@ -8,15 +8,14 @@ body {
 
 .sidebar {
   width: 256px;
-  height: 100vh;
+  min-height: 100vh;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   display: flex;
-  position: fixed;
   flex-direction: column;
+  position: fixed;
   left: 0; top: 0; bottom: 0;
   z-index: 200;
-  overflow-y: hidden;
   transition: transform .3s ease;
 }
 
@@ -154,9 +153,9 @@ display: none;
 
 /* ---- Sidebar Footer ---- */
 .sidebar-footer{
-  padding:16px 12px;
+  padding:16px 12px 20px;
   margin-top:auto;
-  flex-shrink:0;
+  border-top:none;
 }
 
 .btn-logout{
@@ -1281,3 +1280,4 @@ canvas#barChart {
   box-shadow:
     0 0 0 3px rgba(255,255,255,.04);
 }
+
