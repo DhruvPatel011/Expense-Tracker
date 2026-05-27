@@ -8,19 +8,15 @@ body {
 
 .sidebar {
   width: 256px;
-  height: 100dvh; /* FIX */
+  min-height: 100vh;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  left: 0; top: 0; bottom: 0;
   z-index: 200;
-  overflow-y: auto;
   transition: transform .3s ease;
-  padding-bottom: 20px;
 }
 
 .main-content {
@@ -117,6 +113,7 @@ display: none;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow-y: auto;
 }
 
 .nav-item {
@@ -155,12 +152,10 @@ display: none;
 .nav-item.active i { opacity: 1; }
 
 /* ---- Sidebar Footer ---- */
-.sidebar-footer {
-  margin-top: auto;
-
-  padding: 16px 12px 30px;
-
-  flex-shrink: 0;
+.sidebar-footer{
+  padding:16px 12px 20px;
+  margin-top:auto;
+  border-top:none;
 }
 
 .btn-logout{
@@ -1153,23 +1148,6 @@ display: none;
     min-width: 0;
     margin-top: 18px; /* extra spacing on mobile */
   }
-    .sidebar {
-    padding-bottom: 90px;
-  }
-
-  .sidebar-footer {
-
-    display: block !important;
-
-    visibility: visible !important;
-
-    opacity: 1 !important;
-  }
-
-  .btn-logout {
-
-    min-height: 48px;
-  }
 }
 
 /* Bar chart ko completely hide/remove karne ke liye */
@@ -1302,4 +1280,3 @@ canvas#barChart {
   box-shadow:
     0 0 0 3px rgba(255,255,255,.04);
 }
-
