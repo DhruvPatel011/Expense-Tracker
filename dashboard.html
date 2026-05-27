@@ -327,11 +327,13 @@
               <input type="text" id="profileName" required />
             </div>
           </div>
+          <!-- AFTER — email is read-only, visually distinct -->
           <div class="field-group">
             <label>Email Address</label>
             <div class="input-wrap">
               <i class="fa-regular fa-envelope input-icon"></i>
-              <input type="email" id="profileEmail" required />
+              <input type="email" id="profileEmail" readonly
+                style="cursor:not-allowed; opacity:0.65; background:var(--bg);" />
             </div>
           </div>
         </div>

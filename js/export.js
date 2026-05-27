@@ -2,15 +2,24 @@
 import { formatCurrency, formatDate, getTotals } from './transactions.js';
 import { getThisMonthTxs } from './filters.js';
 
+// Fix 7: Strip special/unsupported characters from user-entered text
+// Keeps letters (all scripts), digits, spaces, and common punctuation
+function sanitizeText(str = '') {
+  return String(str)
+    .replace(/[^\p{L}\p{N}\s.,\-_()'":]/gu, '')
+    .trim();
+}
+
 export function exportCSV(txs, currency) {
   const header = ['Date', 'Title', 'Type', 'Category', 'Amount', 'Notes'];
   const rows = txs.map(t => [
     t.date,
-    `"${t.title.replace(/"/g, '""')}"`,
+    // Fix 7: sanitize title and notes before export
+    `"${sanitizeText(t.title).replace(/"/g, '""')}"`,
     t.type,
     t.category,
     t.amount,
-    `"${(t.notes || '').replace(/"/g, '""')}"`,
+    `"${sanitizeText(t.notes || '').replace(/"/g, '""')}"`,
   ]);
 
   const csv = [header, ...rows].map(r => r.join(',')).join('\n');
@@ -18,7 +27,8 @@ export function exportCSV(txs, currency) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `finflow_transactions_${new Date().toISOString().slice(0,10)}.csv`;
+  // Fix 8: "finflow" → "tracklix" in filename
+  a.download = `tracklix_transactions_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -32,20 +42,19 @@ export function exportPDF(txs, user) {
   const monthSpent = monthTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const budget = user.budget || 0;
 
-  // Header
+  // Fix 5 & 8: Replace "FinFlow" with "Tracklix"
   doc.setFillColor(79, 70, 229);
   doc.rect(0, 0, 210, 36, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
-  doc.text('FinFlow – Financial Report', 14, 18);
+  doc.text('Tracklix – Financial Report', 14, 18);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Generated: ${new Date().toLocaleDateString('en-IN', { dateStyle: 'long' })}  |  User: ${user.name}`, 14, 28);
+  doc.text(`Generated: ${new Date().toLocaleDateString('en-IN', { dateStyle: 'long' })}  |  User: ${sanitizeText(user.name)}`, 14, 28);
 
   let y = 50;
 
-  // Summary
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
@@ -72,9 +81,10 @@ export function exportPDF(txs, user) {
 
   y += 8;
 
-  // Top expenses by category
   const catMap = {};
-  txs.filter(t => t.type === 'expense').forEach(t => { catMap[t.category] = (catMap[t.category] || 0) + t.amount; });
+  txs.filter(t => t.type === 'expense').forEach(t => {
+    catMap[t.category] = (catMap[t.category] || 0) + t.amount;
+  });
   const topCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   if (topCats.length > 0) {
@@ -95,7 +105,6 @@ export function exportPDF(txs, user) {
     y += 8;
   }
 
-  // Recent Transactions
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(15, 23, 42);
@@ -104,7 +113,6 @@ export function exportPDF(txs, user) {
   const recent = [...txs].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
 
   doc.setFontSize(9);
-  // Table header
   doc.setFillColor(241, 245, 249);
   doc.rect(14, y - 4, 182, 7, 'F');
   doc.setTextColor(100, 116, 139);
@@ -118,11 +126,15 @@ export function exportPDF(txs, user) {
   doc.setFont('helvetica', 'normal');
   recent.forEach((t, i) => {
     if (y > 270) { doc.addPage(); y = 20; }
-    if (i % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(14, y - 4, 182, 7, 'F'); }
+    if (i % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(14, y - 4, 182, 7, 'F');
+    }
     doc.setTextColor(100, 116, 139);
     doc.text(t.date, 16, y);
     doc.setTextColor(15, 23, 42);
-    doc.text(t.title.slice(0, 28), 42, y);
+    // Fix 7: sanitize title before rendering in PDF
+    doc.text(sanitizeText(t.title).slice(0, 28), 42, y);
     doc.setTextColor(100, 116, 139);
     doc.text(t.category, 110, y);
     if (t.type === 'income') doc.setTextColor(16, 185, 129);
@@ -131,10 +143,11 @@ export function exportPDF(txs, user) {
     y += 7;
   });
 
-  // Footer
+  // Fix 8: Footer — "FinFlow" → "Tracklix"
   doc.setTextColor(148, 163, 184);
   doc.setFontSize(8);
-  doc.text('FinFlow – Smart Expense Tracker  |  finflow.app', 14, 290);
+  doc.text('Tracklix – Smart Expense Tracker  |  tracklix.app', 14, 290);
 
-  doc.save(`finflow_report_${new Date().toISOString().slice(0,10)}.pdf`);
+  // Fix 8: filename — "finflow" → "tracklix"
+  doc.save(`tracklix_report_${new Date().toISOString().slice(0,10)}.pdf`);
 }

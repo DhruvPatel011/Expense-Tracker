@@ -51,7 +51,6 @@ profileForm.addEventListener('submit', (e) => {
   e.preventDefault();
 
   user.name = profileName.value.trim();
-  user.email = profileEmail.value.trim();
 
   // SAVE CURRENCY
   user.currency = profileCurrency.value;

@@ -436,13 +436,14 @@ document.getElementById('clearBudgetBtn').addEventListener('click', () => {
 });
  
 // ======================== PROFILE ========================
+// app.js — AFTER (Fix 4: email is read-only, not editable)
 document.getElementById('profileForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const name     = document.getElementById('profileName').value.trim();
-  const email    = document.getElementById('profileEmail').value.trim();
   const currency = document.getElementById('profileCurrency').value;
-  if (!name || !email) { toast('Name and email are required.', 'error'); return; }
-  const updated = { ...currentUser, name, email, currency };
+  if (!name) { toast('Name is required.', 'error'); return; }
+  // email is read-only — keep existing value, do not overwrite
+  const updated = { ...currentUser, name, currency };
   updateUser(updated);
   currentUser = updated;
   updateAvatarUIs(currentUser);

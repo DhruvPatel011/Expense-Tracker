@@ -152,29 +152,36 @@
       btn.disabled = on;
     }
  
-    document.getElementById('registerForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const name     = document.getElementById('regName').value.trim();
-      const email    = document.getElementById('regEmail').value.trim();
-      const password = document.getElementById('regPassword').value;
-      const confirm  = document.getElementById('regConfirm').value;
-      const currency = document.getElementById('regCurrency').value;
- 
-      if (!name || !email || !password || !confirm) { showAlert('All fields are required.'); return; }
-      if (password.length < 8) { showAlert('Password must be at least 8 characters.'); return; }
-      if (password !== confirm) { showAlert('Passwords do not match.'); return; }
- 
-      setLoading(true);
-      try {
-        await apiRegister({ name, email, password, currency });
-        showAlert('Account created! Redirecting…', 'success');
-        setTimeout(() => window.location.href = 'dashboard.html', 1200);
-      } catch (err) {
-        showAlert(err.message || 'Registration failed. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    });
+      // AFTER — Fix 2: strict email regex, Fix 3: redirect to index.html (login)
+      document.getElementById('registerForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const name     = document.getElementById('regName').value.trim();
+        const email    = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const confirm  = document.getElementById('regConfirm').value;
+        const currency = document.getElementById('regCurrency').value;
+
+        if (!name || !email || !password || !confirm) { showAlert('All fields are required.'); return; }
+
+        // Fix 2: strict email format validation
+        const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(email)) { showAlert('Please enter a valid email address.'); return; }
+
+        if (password.length < 8) { showAlert('Password must be at least 8 characters.'); return; }
+        if (password !== confirm) { showAlert('Passwords do not match.'); return; }
+
+        setLoading(true);
+        try {
+          await apiRegister({ name, email, password, currency });
+          showAlert('Account created! Please sign in.', 'success');
+          // Fix 3: redirect to login page, not dashboard
+          setTimeout(() => window.location.href = 'index.html', 1500);
+        } catch (err) {
+          showAlert(err.message || 'Registration failed. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      });
   </script>
 </body>
 </html>
