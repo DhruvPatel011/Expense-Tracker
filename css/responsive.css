@@ -13,11 +13,6 @@
 
 /* ---- 768px ---- */
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-    width: 280px;
-    z-index: 300;
-  }
   /* ADD inside the @media (max-width: 768px) block */
 .sidebar {
   display: flex;
