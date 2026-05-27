@@ -18,7 +18,7 @@
       font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:500;
       cursor:pointer; transition:all .2s; text-decoration:none; margin-bottom:8px;
     }
-    .btn-google:hover { background:#f8fafc; border-color:#94a3b8; transform:translateY(-1px); }
+    .btn-google:hover { background:#f8fafc; border-color:#94a3b8; }
     .btn-google img { width:18px; height:18px; }
   </style>
 </head>
@@ -107,14 +107,13 @@
   </div>
  
   <script type="module">
-    import { BACKEND_BASE, apiRegister } from './js/storage.js';
+    import { BACKEND_BASE } from './js/storage.js';
  
-    // Google signup URL — auto local/production
     document.getElementById('googleRegBtn').href = `${BACKEND_BASE}/api/auth/google`;
  
     function togglePw(btnId, inputId) {
       document.getElementById(btnId).addEventListener('click', () => {
-        const el   = document.getElementById(inputId);
+        const el = document.getElementById(inputId);
         const icon = document.getElementById(btnId).querySelector('i');
         el.type = el.type === 'password' ? 'text' : 'password';
         icon.className = el.type === 'password' ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
@@ -152,36 +151,42 @@
       btn.disabled = on;
     }
  
-      // AFTER — Fix 2: strict email regex, Fix 3: redirect to index.html (login)
-      document.getElementById('registerForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const name     = document.getElementById('regName').value.trim();
-        const email    = document.getElementById('regEmail').value.trim();
-        const password = document.getElementById('regPassword').value;
-        const confirm  = document.getElementById('regConfirm').value;
-        const currency = document.getElementById('regCurrency').value;
-
-        if (!name || !email || !password || !confirm) { showAlert('All fields are required.'); return; }
-
-        // Fix 2: strict email format validation
-        const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(email)) { showAlert('Please enter a valid email address.'); return; }
-
-        if (password.length < 8) { showAlert('Password must be at least 8 characters.'); return; }
-        if (password !== confirm) { showAlert('Passwords do not match.'); return; }
-
-        setLoading(true);
-        try {
-          await apiRegister({ name, email, password, currency });
-          showAlert('Account created! Please sign in.', 'success');
-          // Fix 3: redirect to login page, not dashboard
-          setTimeout(() => window.location.href = 'index.html', 1500);
-        } catch (err) {
-          showAlert(err.message || 'Registration failed. Please try again.');
-        } finally {
-          setLoading(false);
+    document.getElementById('registerForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const name     = document.getElementById('regName').value.trim();
+      const email    = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm  = document.getElementById('regConfirm').value;
+      const currency = document.getElementById('regCurrency').value;
+ 
+      if (!name || !email || !password || !confirm) { showAlert('All fields are required.'); return; }
+      if (password.length < 8) { showAlert('Password must be at least 8 characters.'); return; }
+      if (password !== confirm) { showAlert('Passwords do not match.'); return; }
+ 
+      setLoading(true);
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password, currency }),
+        });
+        const data = await res.json();
+ 
+        if (!res.ok) {
+          showAlert(data.message || 'Registration failed.');
+          return;
         }
-      });
+ 
+        // ✅ Success — go to login page
+        showAlert('✅ Account created! Redirecting to sign in…', 'success');
+        setTimeout(() => window.location.href = 'index.html', 1500);
+ 
+      } catch (err) {
+        showAlert('Server se connect nahi ho pa raha. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    });
   </script>
 </body>
 </html>
