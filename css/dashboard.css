@@ -13,6 +13,7 @@ body {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   position: fixed;
   left: 0; top: 0; bottom: 0;
   z-index: 200;
@@ -108,7 +109,7 @@ display: none;
 
 /* ---- Sidebar Nav ---- */
 .sidebar-nav {
-  flex: 1;
+  flex: 0 0 auto;
   padding: 16px 12px;
   display: flex;
   flex-direction: column;
@@ -154,7 +155,7 @@ display: none;
 /* ---- Sidebar Footer ---- */
 .sidebar-footer{
   padding:16px 12px 20px;
-  margin-top:auto;
+  margin-top:16px;
   border-top:none;
 }
 
