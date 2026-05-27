@@ -13,9 +13,10 @@ export const DEMO_EXPIRY_KEY  = 'demo_expires_at';
  * The demo user lives only in localStorage for the session duration.
  */
 export function seedDemoData() {
+  // Create a demo user object in cache
   const demoUser = {
     _id: 'demo_user_local',
-    id: 'demo_user_local',
+    id: 'demo_user_local',          // alias used by some modules
     name: 'Demo User',
     email: DEMO_EMAIL,
     currency: '₹',
@@ -28,6 +29,7 @@ export function seedDemoData() {
  
   setCachedUser(demoUser);
  
+  // Store demo session expiry timestamp
   const expiresAt = Date.now() + DEMO_DURATION_MS;
   localStorage.setItem(DEMO_EXPIRY_KEY, String(expiresAt));
  
@@ -39,19 +41,19 @@ function _buildDemoTransactions() {
   const txs = [];
  
   const incomes = [
-    { title: 'Monthly Salary',   amount: 85000, category: 'Salary',     daysAgo: 1,  notes: 'April salary'   },
-    { title: 'Freelance Project',amount: 22000, category: 'Freelance',   daysAgo: 10, notes: 'UI design work' },
-    { title: 'Stock Dividend',   amount: 4500,  category: 'Investment',  daysAgo: 18, notes: ''               },
+    { title: 'Monthly Salary', amount: 85000, category: 'Salary', daysAgo: 1, notes: 'April salary' },
+    { title: 'Freelance Project', amount: 22000, category: 'Freelance', daysAgo: 10, notes: 'UI design work' },
+    { title: 'Stock Dividend', amount: 4500, category: 'Investment', daysAgo: 18, notes: '' },
   ];
  
   const expenses = [
-    { title: 'Grocery Shopping',    amount: 3200, category: 'Food',          daysAgo: 2,  notes: 'BigBasket order' },
-    { title: 'Netflix Subscription',amount: 649,  category: 'Entertainment', daysAgo: 4,  notes: ''               },
-    { title: 'Electricity Bill',    amount: 2100, category: 'Bills',         daysAgo: 6,  notes: 'April bill'      },
-    { title: 'Zomato Orders',       amount: 1850, category: 'Food',          daysAgo: 7,  notes: ''               },
-    { title: 'Uber Rides',          amount: 980,  category: 'Transport',     daysAgo: 9,  notes: ''               },
-    { title: 'Amazon Purchase',     amount: 3499, category: 'Shopping',      daysAgo: 12, notes: 'Headphones'      },
-    { title: 'Gym Membership',      amount: 1500, category: 'Health',        daysAgo: 14, notes: ''               },
+    { title: 'Grocery Shopping', amount: 3200, category: 'Food', daysAgo: 2, notes: 'BigBasket order' },
+    { title: 'Netflix Subscription', amount: 649, category: 'Entertainment', daysAgo: 4, notes: '' },
+    { title: 'Electricity Bill', amount: 2100, category: 'Bills', daysAgo: 6, notes: 'April bill' },
+    { title: 'Zomato Orders', amount: 1850, category: 'Food', daysAgo: 7, notes: '' },
+    { title: 'Uber Rides', amount: 980, category: 'Transport', daysAgo: 9, notes: '' },
+    { title: 'Amazon Purchase', amount: 3499, category: 'Shopping', daysAgo: 12, notes: 'Headphones' },
+    { title: 'Gym Membership', amount: 1500, category: 'Health', daysAgo: 14, notes: '' },
   ];
  
   incomes.forEach(i => {
