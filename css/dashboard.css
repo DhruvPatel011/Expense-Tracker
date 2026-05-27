@@ -8,7 +8,6 @@ body {
 
 .sidebar {
   width: 256px;
-  min-height: 100vh;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   display: flex;
