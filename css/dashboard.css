@@ -1154,15 +1154,7 @@ display: none;
     margin-top: 18px; /* extra spacing on mobile */
   }
     .sidebar {
-
     padding-bottom: 90px;
-    width: 280px;
-
-    max-width: 85%;
-
-    overflow-y: auto;
-
-    -webkit-overflow-scrolling: touch;
   }
 
   .sidebar-footer {
