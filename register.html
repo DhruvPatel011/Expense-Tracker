@@ -18,8 +18,42 @@
       font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:500;
       cursor:pointer; transition:all .2s; text-decoration:none; margin-bottom:8px;
     }
-    .btn-google:hover { background:#f8fafc; border-color:#94a3b8; transform:translateY(-1px); }
+    .btn-google:hover { background:#f8fafc; border-color:#94a3b8; }
     .btn-google img { width:18px; height:18px; }
+ 
+    /* OTP Verification overlay */
+    .otp-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.55); z-index:9999;
+      align-items:center; justify-content:center; padding:16px;
+    }
+    .otp-overlay.open { display:flex; }
+    .otp-modal {
+      background:#fff; border-radius:16px; padding:36px 32px;
+      width:100%; max-width:400px; text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,.2);
+    }
+    .otp-title { font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:700; color:#1e293b; margin-bottom:8px; }
+    .otp-desc { font-size:.85rem; color:#64748b; line-height:1.6; margin-bottom:24px; }
+    .otp-inputs { display:flex; gap:8px; justify-content:center; margin-bottom:20px; }
+    .otp-inputs input {
+      width:46px; height:54px; text-align:center; font-size:1.5rem;
+      font-weight:700; border:1.5px solid #e2e8f0; border-radius:8px;
+      outline:none; font-family:inherit; transition:border-color .2s;
+    }
+    .otp-inputs input:focus { border-color:#4f46e5; }
+    .otp-btn {
+      width:100%; padding:13px; background:#4f46e5; color:#fff;
+      border:none; border-radius:10px; font-size:.95rem; font-weight:600;
+      cursor:pointer; font-family:inherit; transition:opacity .2s;
+    }
+    .otp-btn:hover:not(:disabled) { opacity:.9; }
+    .otp-btn:disabled { opacity:.6; cursor:not-allowed; }
+    .otp-alert { font-size:.82rem; padding:10px 14px; border-radius:8px; margin-bottom:16px; display:none; }
+    .otp-alert.error   { background:#fef2f2; color:#dc2626; display:block; border:1px solid #fecaca; }
+    .otp-alert.success { background:#f0fdf4; color:#16a34a; display:block; border:1px solid #bbf7d0; }
+    .resend-txt { font-size:.8rem; color:#64748b; margin-top:14px; }
+    .resend-txt a { color:#4f46e5; cursor:pointer; }
   </style>
 </head>
 <body class="auth-body">
@@ -106,15 +140,41 @@
     </div>
   </div>
  
+  <!-- Email OTP Verification Modal -->
+  <div class="otp-overlay" id="otpOverlay">
+    <div class="otp-modal">
+      <div style="font-size:2.5rem;margin-bottom:12px">📧</div>
+      <div class="otp-title">Verify Your Email</div>
+      <div class="otp-desc">
+        We sent a 6-digit OTP to<br/>
+        <strong id="otpEmailDisplay"></strong><br/>
+        Enter it below to activate your account.
+      </div>
+      <div class="otp-alert" id="otpAlert"></div>
+      <div class="otp-inputs">
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" />
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" />
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" />
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" />
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" />
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" />
+      </div>
+      <button class="otp-btn" id="otpVerifyBtn">Verify & Activate</button>
+      <p class="resend-txt">
+        Didn't get it? <a id="otpResend">Resend OTP</a>
+      </p>
+    </div>
+  </div>
+ 
   <script type="module">
     import { BACKEND_BASE, apiRegister } from './js/storage.js';
  
-    // Google signup URL — auto local/production
     document.getElementById('googleRegBtn').href = `${BACKEND_BASE}/api/auth/google`;
  
+    // Password toggle
     function togglePw(btnId, inputId) {
       document.getElementById(btnId).addEventListener('click', () => {
-        const el   = document.getElementById(inputId);
+        const el = document.getElementById(inputId);
         const icon = document.getElementById(btnId).querySelector('i');
         el.type = el.type === 'password' ? 'text' : 'password';
         icon.className = el.type === 'password' ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
@@ -123,6 +183,7 @@
     togglePw('togglePw1', 'regPassword');
     togglePw('togglePw2', 'regConfirm');
  
+    // Password strength
     document.getElementById('regPassword').addEventListener('input', e => {
       const v = e.target.value;
       let s = 0;
@@ -152,36 +213,119 @@
       btn.disabled = on;
     }
  
-      // AFTER — Fix 2: strict email regex, Fix 3: redirect to index.html (login)
-      document.getElementById('registerForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const name     = document.getElementById('regName').value.trim();
-        const email    = document.getElementById('regEmail').value.trim();
-        const password = document.getElementById('regPassword').value;
-        const confirm  = document.getElementById('regConfirm').value;
-        const currency = document.getElementById('regCurrency').value;
-
-        if (!name || !email || !password || !confirm) { showAlert('All fields are required.'); return; }
-
-        // Fix 2: strict email format validation
-        const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(email)) { showAlert('Please enter a valid email address.'); return; }
-
-        if (password.length < 8) { showAlert('Password must be at least 8 characters.'); return; }
-        if (password !== confirm) { showAlert('Passwords do not match.'); return; }
-
-        setLoading(true);
-        try {
-          await apiRegister({ name, email, password, currency });
-          showAlert('Account created! Please sign in.', 'success');
-          // Fix 3: redirect to login page, not dashboard
-          setTimeout(() => window.location.href = 'index.html', 1500);
-        } catch (err) {
-          showAlert(err.message || 'Registration failed. Please try again.');
-        } finally {
-          setLoading(false);
+    // ── Register Form ──────────────────────────────────────────
+    let registeredEmail = '';
+ 
+    document.getElementById('registerForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const name     = document.getElementById('regName').value.trim();
+      const email    = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm  = document.getElementById('regConfirm').value;
+      const currency = document.getElementById('regCurrency').value;
+ 
+      if (!name || !email || !password || !confirm) { showAlert('All fields are required.'); return; }
+      if (password.length < 8) { showAlert('Password must be at least 8 characters.'); return; }
+      if (password !== confirm) { showAlert('Passwords do not match.'); return; }
+ 
+      setLoading(true);
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password, currency }),
+        });
+        const data = await res.json();
+ 
+        if (!res.ok) {
+          showAlert(data.message || 'Registration failed.'); return;
         }
+ 
+        // Show OTP verification modal
+        registeredEmail = email;
+        document.getElementById('otpEmailDisplay').textContent = email;
+        document.getElementById('otpOverlay').classList.add('open');
+        document.querySelector('.otp-digit').focus();
+ 
+      } catch (err) {
+        showAlert('Server se connect nahi ho pa raha. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    });
+ 
+    // ── OTP digit auto-advance ─────────────────────────────────
+    document.querySelectorAll('.otp-digit').forEach((input, idx, all) => {
+      input.addEventListener('input', () => {
+        input.value = input.value.replace(/\D/g, '');
+        if (input.value && idx < all.length - 1) all[idx + 1].focus();
       });
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !input.value && idx > 0) all[idx - 1].focus();
+      });
+    });
+ 
+    function otpAlert(msg, type = 'error') {
+      const el = document.getElementById('otpAlert');
+      el.textContent = msg;
+      el.className = `otp-alert ${type}`;
+    }
+ 
+    // ── Verify OTP ─────────────────────────────────────────────
+    document.getElementById('otpVerifyBtn').addEventListener('click', async () => {
+      const otp = [...document.querySelectorAll('.otp-digit')].map(i => i.value).join('');
+      if (otp.length !== 6) { otpAlert('Please enter the complete 6-digit OTP.'); return; }
+ 
+      const btn = document.getElementById('otpVerifyBtn');
+      btn.disabled = true; btn.textContent = 'Verifying…';
+ 
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/auth/verify-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: registeredEmail, otp }),
+        });
+        const data = await res.json();
+ 
+        if (!res.ok) {
+          otpAlert(data.message || 'Incorrect OTP.');
+          btn.disabled = false; btn.textContent = 'Verify & Activate';
+          return;
+        }
+ 
+        // Save token and user, redirect to dashboard
+        const { setToken, setCachedUser } = await import('./js/storage.js');
+        setToken(data.token, true);
+        setCachedUser(data.user);
+ 
+        otpAlert('✅ Email verified! Redirecting to dashboard…', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 1500);
+ 
+      } catch (err) {
+        otpAlert('Verification failed. Please try again.');
+        btn.disabled = false; btn.textContent = 'Verify & Activate';
+      }
+    });
+ 
+    // ── Resend OTP ─────────────────────────────────────────────
+    document.getElementById('otpResend').addEventListener('click', async () => {
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/otp/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: registeredEmail, purpose: 'email_verify' }),
+        });
+        if (res.ok) {
+          otpAlert('OTP resent! Check your email.', 'success');
+          document.querySelectorAll('.otp-digit').forEach(i => i.value = '');
+          document.querySelector('.otp-digit').focus();
+        } else {
+          otpAlert('Could not resend OTP. Try again.');
+        }
+      } catch {
+        otpAlert('Could not resend OTP. Try again.');
+      }
+    });
   </script>
 </body>
 </html>
