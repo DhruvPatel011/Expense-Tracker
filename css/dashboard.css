@@ -8,16 +8,19 @@ body {
 
 .sidebar {
   width: 256px;
-  min-height: 100vh;
+  height: 100dvh; /* FIX */
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   position: fixed;
-  left: 0; top: 0; bottom: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   z-index: 200;
+  overflow-y: auto;
   transition: transform .3s ease;
-  overflow: auto;
+  padding-bottom: 20px;
 }
 
 .main-content {
@@ -153,17 +156,11 @@ display: none;
 
 /* ---- Sidebar Footer ---- */
 .sidebar-footer {
-
-  padding: 16px 12px 24px;
-
   margin-top: auto;
 
-  position: sticky; /* IMPORTANT */
-  bottom: 0;
+  padding: 16px 12px 30px;
 
-  background: #fff;
-
-  z-index: 5;
+  flex-shrink: 0;
 }
 
 .btn-logout{
@@ -1158,6 +1155,7 @@ display: none;
   }
     .sidebar {
 
+    padding-bottom: 90px;
     width: 280px;
 
     max-width: 85%;
@@ -1178,7 +1176,7 @@ display: none;
 
   .btn-logout {
 
-    display: flex !important;
+    min-height: 48px;
   }
 }
 
