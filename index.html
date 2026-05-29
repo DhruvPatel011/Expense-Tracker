@@ -27,7 +27,7 @@
     .btn-google:hover { background:#f8fafc; border-color:#94a3b8; transform:translateY(-1px); }
     .btn-google img { width:18px; height:18px; }
     .forgot-link {
-      font-size:.8rem; color:#4f46e5; text-decoration:none;
+      font-size:.9rem; color:#4f46e5; text-decoration:none;
       font-family:'DM Sans',sans-serif; float:right;
     }
     .forgot-link:hover { text-decoration:underline; }
@@ -121,14 +121,17 @@
         <div class="field-group">
           <label for="loginPassword">
             Password
-            <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
           </label>
           <div class="input-wrap">
             <i class="fa-solid fa-lock input-icon"></i>
             <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required />
             <button type="button" class="toggle-pw" id="togglePw"><i class="fa-regular fa-eye"></i></button>
           </div>
+          <div class="forgot-wrap">
+    <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
+  </div>
         </div>
+
         <div class="auth-row">
           <label class="checkbox-label">
             <input type="checkbox" id="rememberMe" />
