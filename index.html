@@ -453,10 +453,10 @@
       if (/[^a-zA-Z0-9]/.test(v)) s++;
       const colors = [
  '',
- '#ef4444',
- '#f59e0b',
- '#52525b',
- '#111111'
+ '#ef4444', // Weak
+ '#f59e0b', // Fair
+ '#06b6d4', // Good
+ '#10b981'  // Strong
 ];
       const labels = ['','Weak','Fair','Good','Strong'];
       document.getElementById('fpPwFill').style.cssText = `width:${s*25}%;background:${colors[s]}`;
