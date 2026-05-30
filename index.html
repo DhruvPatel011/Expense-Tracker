@@ -30,6 +30,7 @@
     .forgot-link {
   color:#111111;
   font-weight:500;
+  font-size:.82rem;
 }
 
 .forgot-link:hover{
@@ -61,11 +62,11 @@
     .fp-step.active { display:block; }
     .fp-title{
   font-family:"Space Grotesk",sans-serif;
-  font-size:2rem;
+  font-size:1.75rem;
   font-weight:700;
   letter-spacing:-0.04em;
 }
-    .fp-desc { font-size:.84rem; color:#64748b; margin-bottom:20px; line-height:1.6; }
+    .fp-desc { font-size:.84rem; color:#111827; margin-bottom:20px; line-height:1.6; }
     .fp-input-group { margin-bottom:14px; }
     .fp-input-group label { display:block; font-size:.82rem; font-weight:600; margin-bottom:6px; color:#374151; }
     .fp-input-group input {
@@ -84,18 +85,26 @@
     .fp-alert { font-size:.82rem; padding:10px 14px; border-radius:8px; margin-bottom:14px; display:none; }
     .fp-alert.show-error   { background:#fef2f2; color:#dc2626; display:block; border:1px solid #fecaca; }
     .fp-alert.show-success { background:#f0fdf4; color:#16a34a; display:block; border:1px solid #bbf7d0; }
-    .otp-inputs { display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
-    .otp-inputs input{
-  width:54px;
-  height:60px;
+    .otp-inputs{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  margin:24px 0;
+}
+   .otp-inputs input{
+  width:56px;
+  height:56px;
+  border:1px solid #e5e7eb;
   border-radius:16px;
-  border:1px solid #e4e4e7;
   background:#fafafa;
   color:#111111;
-  font-size:1.4rem;
+  text-align:center;
+  font-size:24px;
   font-weight:700;
+  padding:0;
+  outline:none;
+  transition:.2s ease;
 }
-
 .otp-inputs input:focus{
   border-color:#111111;
   box-shadow:0 0 0 4px rgba(0,0,0,.05);
