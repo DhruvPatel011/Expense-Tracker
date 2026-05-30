@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" href="assets/images/image.png">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/auth.css" />
   <style>
@@ -27,10 +28,13 @@
     .btn-google:hover { background:#f8fafc; border-color:#94a3b8; transform:translateY(-1px); }
     .btn-google img { width:18px; height:18px; }
     .forgot-link {
-      font-size:.9rem; color:#4f46e5; text-decoration:none;
-      font-family:'DM Sans',sans-serif; float:right;
-    }
-    .forgot-link:hover { text-decoration:underline; }
+  color:#111111;
+  font-weight:500;
+}
+
+.forgot-link:hover{
+  color:#27272a;
+}
  
     /* ── Forgot Password Modal ── */
     .fp-overlay {
@@ -39,11 +43,15 @@
       align-items:center; justify-content:center; padding:16px;
     }
     .fp-overlay.open { display:flex; }
-    .fp-modal {
-      background:#fff; border-radius:16px; padding:36px 32px;
-      width:100%; max-width:400px;
-      box-shadow:0 20px 60px rgba(0,0,0,.2); position:relative;
-    }
+    .fp-modal{
+  background:#ffffff;
+  width:100%; max-width:520px; padding:32px;
+  border:1px solid #e4e4e7;
+  border-radius:28px;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.03),
+    0 12px 30px rgba(0,0,0,.08);
+}
     .fp-close {
       position:absolute; top:16px; right:16px;
       background:none; border:none; font-size:1.1rem;
@@ -51,7 +59,12 @@
     }
     .fp-step { display:none; }
     .fp-step.active { display:block; }
-    .fp-title { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; margin-bottom:6px; color:#1e293b; }
+    .fp-title{
+  font-family:"Space Grotesk",sans-serif;
+  font-size:2rem;
+  font-weight:700;
+  letter-spacing:-0.04em;
+}
     .fp-desc { font-size:.84rem; color:#64748b; margin-bottom:20px; line-height:1.6; }
     .fp-input-group { margin-bottom:14px; }
     .fp-input-group label { display:block; font-size:.82rem; font-weight:600; margin-bottom:6px; color:#374151; }
@@ -60,9 +73,9 @@
       border-radius:8px; font-size:.9rem; outline:none;
       box-sizing:border-box; transition:border-color .2s; font-family:inherit;
     }
-    .fp-input-group input:focus { border-color:#4f46e5; }
+    .fp-input-group input:focus { border-color:#111111;box-shadow:0 0 0 4px rgba(0,0,0,.05); }
     .fp-btn {
-      width:100%; padding:12px; background:#4f46e5; color:#fff;
+      width:100%; padding:12px; background:#111111; color:#ffffff;
       border:none; border-radius:10px; font-size:.9rem; font-weight:600;
       cursor:pointer; transition:opacity .2s; font-family:inherit;
     }
@@ -72,15 +85,62 @@
     .fp-alert.show-error   { background:#fef2f2; color:#dc2626; display:block; border:1px solid #fecaca; }
     .fp-alert.show-success { background:#f0fdf4; color:#16a34a; display:block; border:1px solid #bbf7d0; }
     .otp-inputs { display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
-    .otp-inputs input {
-      width:44px; height:52px; text-align:center; font-size:1.4rem;
-      font-weight:700; border:1.5px solid #e2e8f0; border-radius:8px;
-      outline:none; font-family:inherit; transition:border-color .2s;
-    }
-    .otp-inputs input:focus { border-color:#4f46e5; }
+    .otp-inputs input{
+  width:54px;
+  height:60px;
+  border-radius:16px;
+  border:1px solid #e4e4e7;
+  background:#fafafa;
+  color:#111111;
+  font-size:1.4rem;
+  font-weight:700;
+}
+
+.otp-inputs input:focus{
+  border-color:#111111;
+  box-shadow:0 0 0 4px rgba(0,0,0,.05);
+}
     .pw-bar { height:4px; background:#e2e8f0; border-radius:2px; overflow:hidden; margin-top:8px; }
     .pw-fill { height:100%; width:0; transition:width .3s,background .3s; border-radius:2px; }
     #fpPwLabel { font-size:.75rem; margin-top:4px; display:block; height:16px; }
+
+    [data-theme="dark"] .fp-modal{
+  background:#18181b;
+  border-color:#27272a;
+}
+
+[data-theme="dark"] .fp-title{
+  color:#fafafa;
+}
+
+[data-theme="dark"] .fp-desc{
+  color:#a1a1aa;
+}
+
+[data-theme="dark"] .fp-input-group input{
+  background:#09090b;
+  border-color:#27272a;
+  color:#fafafa;
+}
+
+[data-theme="dark"] .otp-inputs input{
+  background:#09090b;
+  border-color:#27272a;
+  color:#fafafa;
+}
+
+[data-theme="dark"] .fp-btn{
+  background:#fafafa;
+  color:#111111;
+}
+
+[data-theme="dark"] .fp-btn:hover{
+  background:#e4e4e7;
+}
+
+[data-theme="dark"] #fpResend{
+  color:#fafafa !important;
+}
   </style>
 </head>
 <body class="auth-body">
@@ -166,7 +226,7 @@
       <button class="fp-close" id="fpClose"><i class="fa-solid fa-xmark"></i></button>
  
       <div class="fp-step active" id="fpStep1">
-        <div class="fp-title">🔐 Forgot Password?</div>
+        <div class="fp-title"><i class="fa-solid fa-lock"></i> Forgot Password</div>
         <div class="fp-desc">Enter your registered email — we'll send a 6-digit OTP.</div>
         <div class="fp-alert" id="fpAlert1"></div>
         <div class="fp-input-group">
@@ -177,7 +237,7 @@
       </div>
  
       <div class="fp-step" id="fpStep2">
-        <div class="fp-title">📩 Enter OTP</div>
+        <div class="fp-title"><i class="fa-solid fa-envelope-open-text"></i> Enter OTP</div>
         <div class="fp-desc">6-digit code sent to <strong id="fpEmailDisplay"></strong></div>
         <div class="fp-alert" id="fpAlert2"></div>
         <div class="otp-inputs">
@@ -190,12 +250,12 @@
         </div>
         <button class="fp-btn" id="fpVerifyOTP">Verify OTP</button>
         <p style="text-align:center;font-size:.8rem;margin-top:12px;color:#64748b">
-          Didn't get it? <a href="#" id="fpResend" style="color:#4f46e5">Resend OTP</a>
+          Didn't get it? <a href="#" id="fpResend" style="color:#111111;font-weight:600">Resend OTP</a>
         </p>
       </div>
  
       <div class="fp-step" id="fpStep3">
-        <div class="fp-title">🔑 New Password</div>
+        <div class="fp-title"><i class="fa-solid fa-key"></i> New Password</div>
         <div class="fp-desc">Choose a strong new password.</div>
         <div class="fp-alert" id="fpAlert3"></div>
         <div class="fp-input-group">
@@ -382,7 +442,13 @@
       if (/[A-Z]/.test(v)) s++;
       if (/[0-9]/.test(v)) s++;
       if (/[^a-zA-Z0-9]/.test(v)) s++;
-      const colors = ['','#ef4444','#f59e0b','#06b6d4','#10b981'];
+      const colors = [
+ '',
+ '#ef4444',
+ '#f59e0b',
+ '#52525b',
+ '#111111'
+];
       const labels = ['','Weak','Fair','Good','Strong'];
       document.getElementById('fpPwFill').style.cssText = `width:${s*25}%;background:${colors[s]}`;
       const lbl = document.getElementById('fpPwLabel');
